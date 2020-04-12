@@ -7,11 +7,21 @@ import java.util.Stack;
 // Simple iterator in EasyExpression
 // Deep traversal from entry_point
 public class EasyTraversal {
+    public EasyTraversal(EasyToken entry_point_, boolean reverse_stack_) {
+        entry_point = entry_point_;
+        stack = new Stack<>();
+        ignored_types = new ArrayList<>();
+        ignored_first_types = new ArrayList<>();
+        reverse_stack = reverse_stack_;
+        CreateStack();
+    }
+
     public EasyTraversal(EasyToken entry_point_) {
         entry_point = entry_point_;
         stack = new Stack<>();
         ignored_types = new ArrayList<>();
         ignored_first_types = new ArrayList<>();
+        reverse_stack = true;
         CreateStack();
     }
 
@@ -41,17 +51,20 @@ public class EasyTraversal {
     private Stack<EasyToken> stack;
     private List<EasyOwnerType> ignored_types;
     private List<EasyOwnerType> ignored_first_types;
+    private boolean reverse_stack;
 
     private void CreateStack() {
         stack.push(entry_point);
         TraverseToken(entry_point, true);
 
-        Stack<EasyToken> stackReversed = new Stack<>();
-        while (!stack.empty()) {
-            stackReversed.push(stack.pop());
-        }
+        if (reverse_stack) {
+            Stack<EasyToken> stackReversed = new Stack<>();
+            while (!stack.empty()) {
+                stackReversed.push(stack.pop());
+            }
 
-        stack = stackReversed;
+            stack = stackReversed;
+        }
     }
 
     private void TraverseToken(EasyToken token, boolean isFirstEnter) {
@@ -72,8 +85,11 @@ public class EasyTraversal {
         if (!NeedSkip(EasyOwnerType.RIGHT, isFirstEnter)) {
             TraverseTokenInternal(token.right);
         }
+
         if (!NeedSkip(EasyOwnerType.UNDER_DIVLINE, isFirstEnter)) {
-            TraverseTokenInternal(token.under_divline);
+            for (EasyToken ud : token.under_divline) {
+                TraverseTokenInternal(ud);
+            }
         }
     }
 
