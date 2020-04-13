@@ -1,8 +1,5 @@
 package com.example.easymath;
 
-
-import android.icu.lang.UCharacter;
-
 import java.util.ArrayList;
 import java.util.Stack;
 
@@ -543,6 +540,15 @@ public class EasyToken {
             root = root.owner;
         }
         return root;
+    }
+
+
+    static EasyTokenBox ToScreenCoord(int width, int height, EasyTokenBox bbox) {
+        EasyTokenBox tr_box = new EasyTokenBox(new Vec(bbox.left_bottom), new Vec(bbox.right_top));
+        tr_box.Scale(50);
+        tr_box.InverseY();
+        tr_box.Translate(width / 2.0f, height / 2.0f);
+        return tr_box;
     }
 }
 

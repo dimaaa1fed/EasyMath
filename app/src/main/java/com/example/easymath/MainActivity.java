@@ -7,6 +7,8 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -17,7 +19,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(new DrawView(this));
+
+        this.draw_view = new DrawView(this);
+        this.easy_ui = new EasyUI(this.draw_view.expression, this.draw_view);
+
+        this.draw_view.setOnTouchListener(easy_ui.getHandleTouch());
+
+        setContentView(draw_view);
+
     }
 
     class DrawView extends View {
@@ -33,7 +42,6 @@ public class MainActivity extends AppCompatActivity {
 
         float center_x;
         float center_y;
-
 
         public DrawView(Context context) {
             super(context);
@@ -113,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         private void DrawTokenRect(Canvas canvas, EasyTokenBox bbox, EasyValue value) {
-            EasyTokenBox screenBox = ToScreenCoord(canvas, bbox);
+            EasyTokenBox screenBox = EasyToken.ToScreenCoord(canvas.getWidth(), canvas.getHeight(), bbox);
 
             Rect myRect = new Rect();
             myRect.set((int)screenBox.left_bottom.x, (int)screenBox.right_top.y, (int)screenBox.right_top.x, (int)screenBox.left_bottom.y);
@@ -123,12 +131,13 @@ public class MainActivity extends AppCompatActivity {
             canvas.drawRect(myRect, paint);
         }
 
-        private EasyTokenBox ToScreenCoord (Canvas canvas, EasyTokenBox bbox) {
-            EasyTokenBox tr_box = new EasyTokenBox(new Vec(bbox.left_bottom), new Vec(bbox.right_top));
-            tr_box.Scale(50);
-            tr_box.InverseY();
-            tr_box.Translate(canvas.getWidth() / 2, canvas.getHeight() / 2);
-            return tr_box;
+        @Override
+        public boolean performClick() {
+            return super.performClick();
         }
     }
+
+    private DrawView draw_view;
+    private EasyUI easy_ui;
 }
+

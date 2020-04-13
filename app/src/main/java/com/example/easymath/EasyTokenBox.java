@@ -1,5 +1,8 @@
 package com.example.easymath;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 public class EasyTokenBox {
     public EasyTokenBox(Vec left_bottom_, Vec right_top_) {
         left_bottom = left_bottom_;
@@ -24,6 +27,16 @@ public class EasyTokenBox {
     public void InverseY () {
         left_bottom.y *= -1;
         right_top.y *= -1;
+    }
+
+    public boolean IsInside(Vec point) {
+        double left_x = min(left_bottom.x, right_top.x),
+               right_x = max(left_bottom.x, right_top.x),
+               bottom_y = min(left_bottom.y, right_top.y),
+               top_y = max(left_bottom.y, right_top.y);
+
+        return point.x >= left_x && point.x <= right_x &&
+               point.y >= bottom_y && point.y <= top_y;
     }
 
 
