@@ -51,21 +51,13 @@ public class MainActivity extends AppCompatActivity {
             input_expression.entry_point.SetValue(new EasyValue(0, 0, 0));
 
             // CREATE EXPRESSION
-            expression.entry_point.SetValue(new EasyValue(255, 0 ,0)).CreateRightToken();
-            /*expression.entry_point.CreateUpToken();
-            EasyToken r_up = expression.entry_point.CreateRUpToken();
-            EasyToken r_down = expression.entry_point.CreateRDownToken();
-            r_down.CreateRightToken();
-            r_up.CreateRUpToken();
-            EasyToken end_numerator = expression.entry_point.CreateRightToken().SetValue(new EasyValue(0, 0, 255)).CreateRDownToken();
-           // expression.entry_point.CreateRDownToken().CreateRDownToken();
-           // expression.entry_point.CreateRightToken().CreateRightToken();
-            EasyToken start_denumerator = expression.entry_point.CreateUnderDivlineToken(expression.entry_point).SetValue(new EasyValue(0, 0, 0));
-            start_denumerator.CreateRightToken().SetValue(new EasyValue(50, 50, 50));
-            start_denumerator.CreateRightToken();
-            start_denumerator.CreateRDownToken().CreateRDownToken().CreateRDownToken();*/
+            EasyToken a = expression.entry_point.SetValue(new EasyValue(255, 0 ,0));
+            /*EasyToken b = a.CreateUnderDivlineToken(a);
 
-
+            EasyToken c = b.CreateRightToken();
+            EasyToken d = c.CreateUnderDivlineToken(c);
+            b.CreateUnderDivlineToken(b);
+*/
             redPaint = new Paint();
             redPaint.setColor(Color.RED);
 
@@ -107,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
             // RENDER TRAVERSAL
             DrawExpression(canvas, expression, 0, 0);
-            DrawExpression(canvas, input_expression, 0, -700);
+            DrawExpression(canvas, input_expression, -200, -600);
         }
 
         private void DrawExpression (Canvas canvas, EasyExpression ex, double xoffset, double yoffset) {

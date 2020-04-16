@@ -2,11 +2,9 @@ package com.example.easymath;
 
 import java.util.ArrayList;
 import java.util.Stack;
-
 import static java.lang.Math.abs;
 
 public class EasyToken {
-
     final double scale_factor = 0.5; // for u, d, ru, rd
     final double dist_factor = 1 + 0.1; // for u, d, ru, rd
     final double div_dist_factor = 1.2;
@@ -33,6 +31,8 @@ public class EasyToken {
 
     public ArrayList<EasyTokenBox> div_lines; // refs to EasyExpression
     public EasyTokenBox my_div_line; // start denumerator has it
+
+    boolean is_single_translated = false;
 
     public EasyToken() {
     }
@@ -139,7 +139,9 @@ public class EasyToken {
             owner2 = null;
         }
         if (under_divline2.size() != 0) {
-            under_divline2.get(0).owner2 = right;
+            for (EasyToken d_end : under_divline2) {
+                d_end.owner2 = right;
+            }
             right.under_divline2 = under_divline2;
             under_divline2 = new ArrayList<>();
         }
@@ -160,8 +162,8 @@ public class EasyToken {
         } catch (NullPointerException e) {
             assert (false) : "Bad end numerator token in CreateUnderDivlineToken ";
         }
-
         // End Debug check
+
         under_divline.add(0, new EasyToken(null));
         end_numerator_token.under_divline2.add(0, under_divline.get(0));
         under_divline.get(0).owner = this;
@@ -256,6 +258,7 @@ public class EasyToken {
         EasyTraversal it = new EasyTraversal(this);
         while (it.HasNext()) {
             EasyToken token = it.Next();
+            token.is_single_translated = false;
             EasyOwnerType type = WhoAmI(token);
             if (token.owner == null) {
                 token.bbox = token.CreateBBox(type);
@@ -273,7 +276,7 @@ public class EasyToken {
         }
     }
 
-    public void UpdateBboxIndxes() {
+    /*public void UpdateBboxIndxes() {
         EasyTraversal it = new EasyTraversal(this);
         it.SetIgnore(EasyOwnerType.UNDER_DIVLINE);
         it.SetIgnoreFirst(EasyOwnerType.RIGHT);
@@ -283,9 +286,8 @@ public class EasyToken {
             EasyOwnerType type = WhoAmI(token);
             token.bbox = token.owner.CreateBBox(type);
         }
-
         //TODO: Update divs in idxes
-    }
+    }*/
 
     public void UpdateDivision(int idx)
     {
@@ -294,7 +296,9 @@ public class EasyToken {
         EasyToken start_denumerator = start_numerator.under_divline.get(idx);
         EasyToken end_denumerator = start_denumerator.GetEndOfDenumerator();
 
-        double numerator_max_x = end_numerator.GetRightestSmall().bbox.right_top.x;
+        EasyToken rightest_in_numerator = GetRightestInNumerator(start_numerator, end_numerator, idx);
+
+        double numerator_max_x = rightest_in_numerator.bbox.right_top.x;
         double numerator_min_x = start_numerator.bbox.left_bottom.x;
         double numerator_len = numerator_max_x - numerator_min_x;
 
@@ -307,14 +311,17 @@ public class EasyToken {
         double yoffset = bbox.Height() * div_dist_factor;
 
         // Translate non numerator rest to end of denumerator in the case, then denumerator is longer
+        //TODO: Remove it then GetRightest used in CreateRightToken
         if (abs(line_len - numerator_len) > 0.001) {
             if (end_numerator.right != null) {
-                end_numerator.right.Translate(end_numerator.right, denumerator_len - numerator_len, 0);
+                Translate(end_numerator.right, denumerator_len - numerator_len, 0, true);
             }
         }
 
-        // Numerator goes up to yoffset, other to yoffset / 2
-        start_numerator.TranslateUp(idx, yoffset, end_numerator);
+        // Numerator goes up to yoffset
+        TranslateNumeratorRecursive(start_numerator, end_numerator, idx, 0, yoffset);
+        // Translate single tokens (no under_divline) to yoffset / 2
+        TranlateNearNonDivTokens(start_numerator, end_numerator, 0, yoffset / 2);
 
         // Align in x ases
         {
@@ -324,7 +331,7 @@ public class EasyToken {
             if (line_len != numerator_len) {
                 xoffset_n = (line_len - numerator_len) / 2;
                 //TODO: change, then height of de/numerator don't equals to start
-                Vec lb = new Vec(start_denumerator.bbox.left_bottom.x, start_denumerator.bbox.right_top.y);
+                Vec lb = new Vec(start_denumerator.bbox.left_bottom.x, GetUppest(start_denumerator).bbox.right_top.y);
                 Vec rt = new Vec(end_denumerator.GetRightestSmall().bbox.right_top.x, start_numerator.bbox.left_bottom.y);
 
                 start_denumerator.my_div_line = new EasyTokenBox(lb, rt);
@@ -333,90 +340,158 @@ public class EasyToken {
                 xoffset_d = (line_len - denumerator_len) / 2;
 
                 //TODO: change, then height of de/numerator don't equals to start
-                Vec lb = new Vec(start_numerator.bbox.left_bottom.x, start_denumerator.bbox.right_top.y);
-                Vec rt = new Vec(end_numerator.GetRightestSmall().bbox.right_top.x, start_numerator.bbox.left_bottom.y);
+                Vec lb = new Vec(start_numerator.bbox.left_bottom.x, GetUppest(start_denumerator).bbox.right_top.y);
+                Vec rt = new Vec(rightest_in_numerator.bbox.right_top.x, start_numerator.bbox.left_bottom.y);
 
                 start_denumerator.my_div_line = new EasyTokenBox(lb, rt);
                 div_lines.add(start_denumerator.my_div_line);
             }
 
-            EasyToken cur;
             if (xoffset_n != 0) {
-                cur = start_numerator;
-                while (cur != end_numerator) {
-                    cur.bbox.Translate(xoffset_n, 0);
-                    cur.UpdateBboxIndxes();
-                    cur = cur.right;
-                }
-                cur.bbox.Translate(xoffset_n, 0);
-                cur.UpdateBboxIndxes();
+                TranslateNumerator(start_numerator, end_numerator, idx, xoffset_n, 0, false);
             }
 
             if (xoffset_d != 0) {
-                cur = start_denumerator;
-                while (cur != end_denumerator) {
-                    cur.bbox.Translate(xoffset_d, 0);
-                    cur.UpdateBboxIndxes();
-                    cur = cur.right;
-                }
-                cur.bbox.Translate(xoffset_d, 0);
-                cur.UpdateBboxIndxes();
+                Translate(start_denumerator, xoffset_d, 0, false);
             }
         }
     }
 
-    public void TranslateUp(int idx, double yoffset, EasyToken end_numerator) {
+    /*public void TranslateUp(EasyToken start_numerator, EasyToken end_numerator, int idx, double yoffset) {
         // Right to numerator
         if (end_numerator.right != null) {
-            end_numerator.right.Translate(end_numerator.right, 0, yoffset / 2);
+            Translate(end_numerator.right, 0, yoffset / 2, true);
         }
 
         // Left to numerator
         if (this.owner != null && WhoAmI(this) == EasyOwnerType.RIGHT) {
             EasyToken left = this.owner;
             left.right = null;
-            Translate(left.GetRoot(), 0, yoffset / 2);
+            Translate(left.GetRoot(), 0, yoffset / 2, true);
             left.right = this;
         }
 
+        TranslateNumerator(start_numerator, end_numerator, idx, 0, yoffset);
+    }*/
 
-        // numerator
-        EasyToken t1 = this.owner;
-        EasyToken t2 = end_numerator.right;
-
-
-        if (t1 != null && WhoAmI(this) == EasyOwnerType.RIGHT) {
-            this.owner = null;
-        }
-        end_numerator.right = null;
-
-        Stack<EasyToken> deleted = new Stack<>();
-        for (int i = under_divline.size() - 1; i >= idx; i--) {
-            deleted.push(under_divline.get(i));
-        }
-        for (int i = under_divline.size() - idx; i > 0; i--) {
-            under_divline.remove(under_divline.size() - 1);
-        }
-
-        Translate(this.GetRoot(), 0, yoffset);
-
-        while (!deleted.empty()) {
-            under_divline.add(deleted.pop());
-        }
-
-        this.owner = t1;
-        end_numerator.right = t2;
-    }
-
-    public void Translate(EasyToken root, double xoffset, double yoffset) {
+    public void Translate(EasyToken root, double xoffset, double yoffset, boolean translate_lines) {
         EasyTraversal it = new EasyTraversal(root);
         while (it.HasNext()) {
             EasyToken token = it.Next();
             token.bbox.Translate(xoffset, yoffset);
             if (token.my_div_line != null) {
-                token.my_div_line.Translate(xoffset, yoffset);
+                if (translate_lines) {
+                    token.my_div_line.Translate(xoffset, yoffset);
+                }
             }
         }
+    }
+
+    public void TranslateOneNode(EasyToken root, double xoffset, double yoffset, boolean translate_lines) {
+        EasyTraversal it = new EasyTraversal(root);
+        it.SetIgnoreFirst(EasyOwnerType.RIGHT);
+        it.SetIgnoreFirst(EasyOwnerType.UNDER_DIVLINE);
+        while (it.HasNext()) {
+            EasyToken token = it.Next();
+            token.bbox.Translate(xoffset, yoffset);
+            if (token.my_div_line != null) {
+                if (translate_lines) {
+                    token.my_div_line.Translate(xoffset, yoffset);
+                }
+            }
+        }
+    }
+
+    public void TranslateNumeratorRecursive(EasyToken start_numerator, EasyToken end_numerator, int idx, double xoffset, double yoffset)
+    {
+        TranslateNumerator(start_numerator, end_numerator, idx, xoffset, yoffset, false);
+
+        EasyToken den_end = end_numerator.GetEndOfDenumerator();
+                                                                // in this case it updates in translate numerator
+        if (den_end != null /*&& end_numerator.owner2 == null*/ && WhoAmI(start_numerator) != EasyOwnerType.UNDER_DIVLINE) {
+            EasyToken n_end = den_end.owner2;
+            EasyToken n_start = den_end.GetStartOfNumerator();
+
+            // TODO: now []/([]/[])/([]/[]) bad render
+            /*EasyToken flag, cur = n_start;
+            while (cur != n_end) {
+                if (cur.under_divline.size() != 0) {
+                    flag = cur;
+                }
+                cur = cur.right;
+            }
+            if (flag = n_start) {
+
+            }*/
+
+            EasyToken den_start = den_end.GetStartOfDenumerator();
+            int new_idx = n_start.under_divline.indexOf(den_start);
+            TranslateNumerator(n_start, n_end, new_idx, xoffset, yoffset, true);
+        }
+    }
+
+    public void TranlateNearNonDivTokens(EasyToken start_numerator, EasyToken end_numerator, double xoffset, double yoffset)
+    {
+        // Translate tokens left to...
+        EasyToken left = null;
+        if (WhoAmI(start_numerator) == EasyOwnerType.RIGHT) {
+            left = start_numerator.owner;
+        }
+
+        EasyToken cur = left;
+        while (cur != null && cur.under_divline2.size() == 0) {
+            if (cur.is_single_translated) {
+                break;
+            }
+            cur.is_single_translated = true;
+            TranslateOneNode(cur, xoffset, yoffset, true);
+            if (WhoAmI(cur) == EasyOwnerType.RIGHT) {
+                cur = cur.owner;
+                if (cur.right.under_divline.size() != 0) {
+                    break;
+                }
+            } else {
+                cur = null;
+            }
+        }
+
+        // Translate tokens right to...
+        cur = end_numerator.right;
+        while (cur != null && cur.under_divline.size() == 0) {
+            if (cur.is_single_translated) {
+                break;
+            }
+            cur.is_single_translated = true;
+            TranslateOneNode(cur, xoffset, yoffset, true);
+            cur = cur.right;
+        }
+    }
+
+    public void TranslateNumerator(EasyToken start_numerator, EasyToken end_numerator, int idx, double xoffset, double yoffset, boolean tr_nearest) {
+        EasyToken t1 = start_numerator.owner;
+        EasyToken t2 = end_numerator.right;
+
+        if (WhoAmI(start_numerator) == EasyOwnerType.RIGHT && !tr_nearest) {
+            start_numerator.owner = null;
+        }
+        end_numerator.right = null;
+
+        Stack<EasyToken> deleted = new Stack<>();
+        for (int i = start_numerator.under_divline.size() - 1; i >= idx; i--) {
+            deleted.push(start_numerator.under_divline.get(i));
+        }
+        for (int i = start_numerator.under_divline.size() - idx; i > 0; i--) {
+            start_numerator.under_divline.remove(start_numerator.under_divline.size() - 1);
+        }
+
+        Translate(this.GetRoot(), xoffset, yoffset, true);
+
+        while (!deleted.empty()) {
+            start_numerator.under_divline.add(deleted.pop());
+        }
+
+        start_numerator.owner = t1;
+        end_numerator.right = t2;
     }
 
 
@@ -476,6 +551,70 @@ public class EasyToken {
         return EasyOwnerType.INVALID;
     }
 
+    public EasyToken GetRightestInNumerator (EasyToken start_numerator, EasyToken end_numerator, int idx) {
+        EasyToken t1 = start_numerator.owner;
+        EasyToken t2 = end_numerator.right;
+
+        //if (WhoAmI(start_numerator) == EasyOwnerType.RIGHT) {
+            start_numerator.owner = null;
+        //}
+        end_numerator.right = null;
+
+        Stack<EasyToken> deleted = new Stack<>();
+        for (int i = start_numerator.under_divline.size() - 1; i >= idx; i--) {
+            deleted.push(start_numerator.under_divline.get(i));
+        }
+        for (int i = start_numerator.under_divline.size() - idx; i > 0; i--) {
+            start_numerator.under_divline.remove(start_numerator.under_divline.size() - 1);
+        }
+
+        EasyToken rightest = GetRightest(this.GetRoot());
+
+        while (!deleted.empty()) {
+            start_numerator.under_divline.add(deleted.pop());
+        }
+
+        start_numerator.owner = t1;
+        end_numerator.right = t2;
+
+        return rightest;
+    }
+
+    public EasyToken GetRightest(EasyToken root) {
+        EasyToken rightest = null;
+
+        EasyTraversal it = new EasyTraversal(root);
+        while (it.HasNext()) {
+            EasyToken token = it.Next();
+            if (rightest == null) {
+                rightest = token;
+            } else {
+                if (rightest.bbox.right_top.x < token.bbox.right_top.x) {
+                    rightest = token;
+                }
+            }
+        }
+        return rightest;
+    }
+
+    public EasyToken GetUppest(EasyToken root) {
+        EasyToken uppest = null;
+
+        EasyTraversal it = new EasyTraversal(root);
+        while (it.HasNext()) {
+            EasyToken token = it.Next();
+            if (uppest == null) {
+                uppest = token;
+            } else {
+                if (uppest.bbox.right_top.y < token.bbox.right_top.y) {
+                    uppest = token;
+                }
+            }
+        }
+        return uppest;
+    }
+
+/////////////////////////////////
     // TODO: up down???
     // Get token, that has got rightest bbox (recursion don't go to right firstly)
     public EasyToken GetRightestSmall () {
@@ -511,6 +650,7 @@ public class EasyToken {
         rightest = __GetRightestSmallInternal(token.right, rightest);
         return rightest;
     }
+/////////////////////////////////
 
     // End denumerator has ref to end of numerator (owner2)
     public EasyToken GetEndOfNumerator(int idx) {
@@ -526,6 +666,18 @@ public class EasyToken {
             end_denumerator = end_denumerator.right;
         }
         return end_denumerator;
+    }
+
+    public EasyToken GetStartOfDenumerator() {
+        EasyToken start_denumerator = this;
+        while (WhoAmI(start_denumerator) != EasyOwnerType.UNDER_DIVLINE) {
+            start_denumerator = start_denumerator.owner;
+        }
+        return start_denumerator;
+    }
+
+    public EasyToken GetStartOfNumerator() {
+        return GetStartOfDenumerator().owner;
     }
 
     private void FillDivlineRef()
@@ -551,8 +703,6 @@ public class EasyToken {
         return tr_box;
     }
 }
-
-
 
 
 enum EasyOwnerType {

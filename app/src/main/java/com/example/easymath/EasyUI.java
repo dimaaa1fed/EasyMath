@@ -157,7 +157,7 @@ public class EasyUI {
             if (diff.GetLength() < 200) {
                 input_expression.entry_point.CreateDownToken();
             } else {
-                input_expression.entry_point.CreateUnderDivlineToken(active_token);
+                input_expression.entry_point.CreateUnderDivlineToken(input_expression.entry_point);
             }
         }
         else
