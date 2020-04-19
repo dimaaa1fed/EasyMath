@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">EasyMath</string>
+    <string name="type_something">Type value</string>
+    <string name="type_number">Type number</string>
 </resources>

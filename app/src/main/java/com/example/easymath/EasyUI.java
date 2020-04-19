@@ -55,9 +55,6 @@ public class EasyUI {
             EasyToken token = it.Next();
             EasyTokenBox bbox = token.bbox;
             EasyValue value = token.value;
-            if (value == null) {
-                value = new EasyValue(0, 255, 0);
-            }
             EasyTokenBox cur_box = EasyToken.ToScreenCoord(width, height, bbox);
             if (cur_box.IsInside(point)) {
                 this.active_token = token;
@@ -81,7 +78,6 @@ public class EasyUI {
     }
 
     public void revert() {
-        this.active_token = null;
         this.start_touch = null;
     }
 
@@ -99,24 +95,24 @@ public class EasyUI {
         double angle = cur_point.GetAngleToX(start_touch, true);
         if (angle >= 60 && angle <= 120) {
             // add up
-            active_token.CreateUpToken();
+            active_token = active_token.CreateUpToken();
         }
         else if (angle >= 30 && angle <= 60) {
             // add right upp
-            active_token.CreateRUpToken();
+            active_token = active_token.CreateRUpToken();
         }
         else if (angle >= -30 && angle <= 30)
         {
             // add right
-            active_token.CreateRightToken();
+            active_token = active_token.CreateRightToken();
         }
         else if (angle >= -60 && angle <= -30) {
             // add right down
-            active_token.CreateRDownToken();
+            active_token = active_token.CreateRDownToken();
         }
         else if (angle >= -120 && angle <= -60) {
             // add down box
-            active_token.CreateDownToken();
+            active_token = active_token.CreateDownToken();
         }
         else
         {

@@ -10,6 +10,9 @@ import android.graphics.Paint;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 
 import java.util.ArrayList;
 
@@ -26,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
         this.draw_view.setOnTouchListener(easy_ui.getHandleTouch());
 
         setContentView(draw_view);
+
 
     }
 
@@ -135,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
         public boolean performClick() {
             return super.performClick();
         }
+
     }
 
     private DrawView draw_view;
