@@ -31,12 +31,12 @@ public class EasyTokenBox {
 
     public boolean IsInside(Vec point) {
         double left_x = min(left_bottom.x, right_top.x),
-               right_x = max(left_bottom.x, right_top.x),
-               bottom_y = min(left_bottom.y, right_top.y),
-               top_y = max(left_bottom.y, right_top.y);
+                right_x = max(left_bottom.x, right_top.x),
+                bottom_y = min(left_bottom.y, right_top.y),
+                top_y = max(left_bottom.y, right_top.y);
 
         return point.x >= left_x && point.x <= right_x &&
-               point.y >= bottom_y && point.y <= top_y;
+                point.y >= bottom_y && point.y <= top_y;
     }
 
 

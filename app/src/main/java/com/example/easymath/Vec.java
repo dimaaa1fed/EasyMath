@@ -21,9 +21,8 @@ public class Vec {
     }
 
     public Vec GetScaled (double val) {
-       return new Vec(x * val, y * val);
+        return new Vec(x * val, y * val);
     }
-
 
     public void Translate (double x_, double y_) {
         x += x_;
@@ -38,7 +37,6 @@ public class Vec {
     public Vec GetTranslated (double x_, double y_) {
         return new Vec(x + x_, y + y_);
     }
-
 
     public Vec GetTranslated (Vec v) {
         return new Vec(x + v.x, y + v.y);

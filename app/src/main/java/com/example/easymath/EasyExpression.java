@@ -7,7 +7,15 @@ import java.util.ArrayList;
 public class EasyExpression {
     public EasyExpression(){
         entry_point = new EasyToken();
+        entry_point.CreateBBoxSkeleton();
         entry_point.div_lines = div_lines;
+    }
+
+    public void Reset () {
+        div_lines.clear();
+        entry_point = new EasyToken();
+        entry_point.div_lines = div_lines;
+        entry_point.CreateBBoxSkeleton();
     }
 
     public EasyToken GetEntryTokenByClick (double x, double y) {

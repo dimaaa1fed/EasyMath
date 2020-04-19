@@ -8,10 +8,11 @@ import android.view.MotionEvent;
 import android.view.View;
 
 public class EasyUI {
-    EasyUI(EasyExpression expression, View drawView) {
+    EasyUI(EasyExpression expression, EasyExpression input_expression, View drawView) {
         revert();
         this.drawView = drawView;
         this.expression = expression;
+        this.input_expression = input_expression;
         this.handleTouch = new View.OnTouchListener() {
 
             @Override
@@ -23,14 +24,15 @@ public class EasyUI {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         findActiveToken(x, y);
-
                         Log.i("TAG", "touched down");
                         break;
                     case MotionEvent.ACTION_MOVE:
-                        Log.i("TAG", "moving: (" + x + ", " + y + ")");
-                        calcNewToken(x, y);
+                        if (active_token != null) {
+                            showExampleToken(x, y);
+                        }
                         break;
                     case MotionEvent.ACTION_UP:
+                        calcNewToken(x, y);
                         revert();
                         v.performClick();
                         Log.i("TAG", "touched up");
@@ -46,7 +48,7 @@ public class EasyUI {
         revert();
 
         int width = Resources.getSystem().getDisplayMetrics().widthPixels;
-        int height = Resources.getSystem().getDisplayMetrics().heightPixels;
+        int height = Resources.getSystem().getDisplayMetrics().heightPixels - 200; //Does not same as in canvas
 
         // RENDER TRAVERSAL
         Vec point = new Vec(x, y);
@@ -94,25 +96,24 @@ public class EasyUI {
 
         double angle = cur_point.GetAngleToX(start_touch, true);
         if (angle >= 60 && angle <= 120) {
-            // add up
-            active_token = active_token.CreateUpToken();
+            active_token.CreateUpToken();
         }
         else if (angle >= 30 && angle <= 60) {
-            // add right upp
-            active_token = active_token.CreateRUpToken();
+            active_token.CreateRDownToken();
         }
         else if (angle >= -30 && angle <= 30)
         {
-            // add right
-            active_token = active_token.CreateRightToken();
+            active_token.CreateRightToken();
         }
         else if (angle >= -60 && angle <= -30) {
-            // add right down
-            active_token = active_token.CreateRDownToken();
+            active_token.CreateRUpToken();
         }
         else if (angle >= -120 && angle <= -60) {
-            // add down box
-            active_token = active_token.CreateDownToken();
+            if (diff.GetLength() < 200) {
+                active_token.CreateDownToken();
+            } else {
+                active_token.CreateUnderDivlineToken(active_token);
+            }
         }
         else
         {
@@ -120,16 +121,57 @@ public class EasyUI {
             Log.i("TAG", "Wrong angle");
             return;
         }
-
-
         revert();
         this.drawView.invalidate();
     }
 
+    public void showExampleToken(int x, int y) {
+        Vec cur_point = new Vec(x, y);
+        Vec diff = cur_point.GetAdded(start_touch.GetScaled(-1));
+        input_expression.Reset();
+        if (diff.GetLength() < minActionLength) {
+            return;
+        }
+
+
+        double angle = cur_point.GetAngleToX(start_touch, true);
+        Log.i("TAG", new Double(angle).toString());
+
+        if (angle >= 60 && angle <= 120) {
+            input_expression.entry_point.CreateUpToken();
+        }
+        else if (angle >= 30 && angle <= 60) {
+            input_expression.entry_point.CreateRDownToken();
+        }
+        else if (angle >= -30 && angle <= 30)
+        {
+            input_expression.entry_point.CreateRightToken();
+        }
+        else if (angle >= -60 && angle <= -30) {
+            input_expression.entry_point.CreateRUpToken();
+        }
+        else if (angle >= -120 && angle <= -60) {
+            if (diff.GetLength() < 200) {
+                input_expression.entry_point.CreateDownToken();
+            } else {
+                input_expression.entry_point.CreateUnderDivlineToken(input_expression.entry_point);
+            }
+        }
+        else
+        {
+            // do not have move
+            return;
+        }
+        //revert();
+        this.drawView.invalidate();
+    }
+
+
+    private EasyExpression input_expression;
     private EasyExpression expression;
     private View.OnTouchListener handleTouch;
     private EasyToken active_token;
     private Vec start_touch;
-    private double minActionLength = 10;
+    private double minActionLength = 100;
     private View drawView;
 }

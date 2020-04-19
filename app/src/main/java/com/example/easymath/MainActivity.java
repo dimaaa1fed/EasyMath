@@ -24,7 +24,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         this.draw_view = new DrawView(this);
-        this.easy_ui = new EasyUI(this.draw_view.expression, this.draw_view);
+        this.easy_ui = new EasyUI(this.draw_view.expression, this.draw_view.input_expression, this.draw_view);
 
         this.draw_view.setOnTouchListener(easy_ui.getHandleTouch());
 
@@ -36,6 +36,7 @@ public class MainActivity extends AppCompatActivity {
     class DrawView extends View {
 
         EasyExpression expression = new EasyExpression();
+        EasyExpression input_expression = new EasyExpression();
 
         Paint fontPaint;
         Paint redPaint;
@@ -50,22 +51,17 @@ public class MainActivity extends AppCompatActivity {
         public DrawView(Context context) {
             super(context);
 
+            //
+            input_expression.entry_point.SetValue(new EasyValue(0, 0, 0));
+
             // CREATE EXPRESSION
-            expression.entry_point.SetValue(new EasyValue(255, 0 ,0));
-            expression.entry_point.CreateUpToken();
-            EasyToken r_up = expression.entry_point.CreateRUpToken();
-            EasyToken r_down = expression.entry_point.CreateRDownToken();
-            r_down.CreateRightToken();
-            r_up.CreateRUpToken();
-            EasyToken end_numerator = expression.entry_point.CreateRightToken().SetValue(new EasyValue(0, 0, 255)).CreateRDownToken();
-           // expression.entry_point.CreateRDownToken().CreateRDownToken();
-           // expression.entry_point.CreateRightToken().CreateRightToken();
-            EasyToken start_denumerator = expression.entry_point.CreateUnderDivlineToken(expression.entry_point).SetValue(new EasyValue(0, 0, 0));
-            start_denumerator.CreateRightToken().SetValue(new EasyValue(50, 50, 50));
-            start_denumerator.CreateRightToken();
-            start_denumerator.CreateRDownToken().CreateRDownToken().CreateRDownToken();
+            EasyToken a = expression.entry_point.SetValue(new EasyValue(255, 0 ,0));
+            /*EasyToken b = a.CreateUnderDivlineToken(a);
 
-
+            EasyToken c = b.CreateRightToken();
+            EasyToken d = c.CreateUnderDivlineToken(c);
+            b.CreateUnderDivlineToken(b);
+*/
             redPaint = new Paint();
             redPaint.setColor(Color.RED);
 
@@ -106,7 +102,12 @@ public class MainActivity extends AppCompatActivity {
             center_y = canvas.getHeight() / 2;
 
             // RENDER TRAVERSAL
-            EasyTraversal it = expression.Iterator();
+            DrawExpression(canvas, expression, 0, 0);
+            DrawExpression(canvas, input_expression, -200, -600);
+        }
+
+        private void DrawExpression (Canvas canvas, EasyExpression ex, double xoffset, double yoffset) {
+            EasyTraversal it = ex.Iterator();
             while (it.HasNext()) {
                 EasyToken token = it.Next();
                 EasyTokenBox bbox = token.bbox;
@@ -114,21 +115,20 @@ public class MainActivity extends AppCompatActivity {
                 if (value == null) {
                     value = new EasyValue(0, 255, 0);
                 }
-                DrawTokenRect(canvas, bbox, value);
+                DrawTokenRect(canvas, bbox, value, xoffset, yoffset);
             }
 
-            ArrayList<EasyTokenBox> div_lines = expression.GetDivisionLines();
+            ArrayList<EasyTokenBox> div_lines = ex.GetDivisionLines();
             for (EasyTokenBox line : div_lines) {
-                DrawTokenRect(canvas, line, new EasyValue(0, 0, 0));
+                DrawTokenRect(canvas, line, new EasyValue(0, 0, 0), xoffset, yoffset);
             }
-            //expression.entry_point.SetValue(new EasyValue(1, 0 ,0));
         }
 
-        private void DrawTokenRect(Canvas canvas, EasyTokenBox bbox, EasyValue value) {
+        private void DrawTokenRect(Canvas canvas, EasyTokenBox bbox, EasyValue value, double xoffset, double yoffset) {
             EasyTokenBox screenBox = EasyToken.ToScreenCoord(canvas.getWidth(), canvas.getHeight(), bbox);
-
+            screenBox.Translate(xoffset, yoffset);
             Rect myRect = new Rect();
-            myRect.set((int)screenBox.left_bottom.x, (int)screenBox.right_top.y, (int)screenBox.right_top.x, (int)screenBox.left_bottom.y);
+            myRect.set((int)screenBox.left_bottom.x, (int)screenBox.left_bottom.y, (int)screenBox.right_top.x, (int)screenBox.right_top.y);
             Paint paint = new Paint();
             paint.setColor(Color.rgb(value.r, value.g, value.b));
             paint.setStyle(Paint.Style.FILL);
