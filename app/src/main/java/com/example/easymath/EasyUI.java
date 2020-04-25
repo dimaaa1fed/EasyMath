@@ -1,5 +1,6 @@
 package com.example.easymath;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.res.Resources;
@@ -10,8 +11,13 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 
+import java.io.OutputStreamWriter;
+
+import static android.os.ParcelFileDescriptor.MODE_APPEND;
+
 public class EasyUI {
-    EasyUI(EasyExpression expression, EasyExpression input_expression, View drawView) {
+    EasyUI(EasyExpression expression, final EasyExpression input_expression, View drawView, Activity app) {
+        this.app = app;
         revert();
         this.drawView = drawView;
 
@@ -75,6 +81,23 @@ public class EasyUI {
                         revert();
                         v.performClick();
                         Log.i("TAG", "touched up");
+
+                        if (!firstTouch) {
+                            firstTouch = true;
+                            time = System.currentTimeMillis();
+                        }
+                        else
+                        {
+                            if (System.currentTimeMillis() - time <
+                                    android.view.ViewConfiguration.getDoubleTapTimeout()) {
+                                latex_text = input_expression.ToLatex();
+                                savetext(latex_text);
+                            }
+                            else {
+                                firstTouch = false;
+                            }
+                        }
+
                         break;
                 }
 
@@ -277,6 +300,40 @@ public class EasyUI {
         return globalZoom;
     }
 
+    public void savetext (String textToSave) {
+        String msg = "";
+
+        try {
+
+            OutputStreamWriter out = new OutputStreamWriter(app.openFileOutput("TextFile", MODE_APPEND));
+            out.write(textToSave);
+            out.write('\n');
+            out.close();
+
+            msg = "Latex text successfully added";
+        } catch (Throwable t) {
+            msg = "Error while saving latex text";
+        }
+
+        msg += ": '" + textToSave + "'";
+
+        new AlertDialog.Builder(this.drawView.getContext())
+                .setTitle("Latex")
+                .setMessage(msg)
+
+                // Specifying a listener allows you to take an action before dismissing the dialog.
+                // The dialog is automatically dismissed when a dialog button is clicked.
+                .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        // Continue with delete operation
+                    }
+                })
+                // A null listener allows the button to dismiss the dialog and take no further action.
+                .setNegativeButton(android.R.string.no, null)
+                .setIcon(android.R.drawable.ic_dialog_info)
+                .show();
+    }
+
     private EasyExpression input_expression;
     private EasyExpression expression;
     private View.OnTouchListener handleTouch;
@@ -294,6 +351,9 @@ public class EasyUI {
     private final Handler handler;
     private Runnable mLongPressed;
     private String mText = "";
+    private boolean firstTouch = false;
+    private long time;
+    private String latex_text = "";
 
     private Vec globalTranslate = new Vec(0, 0);
     private float globalZoom = 1;
@@ -306,4 +366,5 @@ public class EasyUI {
     final double zoomStep = 0.02;
 
     private boolean moveOrZoom = false;
+    private Activity app;
 }
