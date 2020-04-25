@@ -1,6 +1,5 @@
 package com.example.easymath;
 
-import java.awt.font.TextAttribute;
 import java.util.ArrayList;
 import java.util.Stack;
 import static java.lang.Math.abs;
@@ -12,9 +11,8 @@ public class EasyToken {
 
     public double scale = 1;
 
-    public int group_global_id = 0;
-    public int token_group_id = -1;  // -1 - no groupe
-    public boolean entry_of_group = false;
+    static public int group_global_id = 0;
+    public int token_groups_id = -1;
 
     // indexes, or signs
     // small size boxes
@@ -73,35 +71,62 @@ public class EasyToken {
         EasyToken open_br = CreateRightToken().setText("(");
 
         for (int i = name.length() - 1; i >= 0; i--) {
+            if (i == 0) {
+                if (text.equals("")) {
+                    token_group.add(this.setText(String.valueOf(name.charAt(i))));
+                    break;
+                }
+            }
+
             token_group.add(CreateRightToken().setText(String.valueOf(name.charAt(i))));
         }
 
         // set id
-        close_br.token_group_id = group_global_id;
-        empty.token_group_id = group_global_id;
-        open_br.token_group_id = group_global_id;
+        close_br.token_groups_id = group_global_id;
+        //empty.token_groups_id = group_global_id;
+        open_br.token_groups_id = group_global_id;
         for (EasyToken token : token_group) {
-            token.token_group_id = group_global_id;
+            token.token_groups_id = group_global_id;
         }
 
-        empty.entry_of_group = true;
+        //empty.entry_of_group = true;
         group_global_id++;
         return empty;
     }
 
+    // call: on group name or brackets
     public EasyToken GetEndOfGroup() {
-        int group_id = token_group_id;
+        if (text.equals(")")) {
+            return this;
+        }
+
+        int group_id = token_groups_id;
         EasyToken cur = this;
-        while (cur.right != null && cur.right.token_group_id == group_id) {
+
+        // go to entry
+        while (cur.right != null && cur.right.token_groups_id == group_id) {
             cur = cur.right;
         }
-        return cur;
+
+        // skip entry
+        while (cur.right != null && cur.right.token_groups_id != group_id) {
+            cur = cur.right;
+        }
+
+        return cur.right;
     }
 
     public EasyToken GetStartOfGroup() {
-        int group_id = token_group_id;
         EasyToken cur = this;
-        while (cur.owner != null && cur.owner.token_group_id == group_id) {
+        int group_id = token_groups_id;
+
+        if (text.equals(")")) {
+            while (cur.owner.token_groups_id != group_id) {
+                cur = cur.owner;
+            }
+        }
+
+        while (cur.owner != null && cur.owner.token_groups_id == group_id) {
             cur = cur.owner;
         }
         return cur;
@@ -110,14 +135,15 @@ public class EasyToken {
     // call: start group token
     public EasyToken GetEmptyInGroup() {
         EasyToken cur = this;
-        while (!cur.entry_of_group) {
+        int group_id = cur.token_groups_id;
+        while (cur.token_groups_id == group_id) {
             cur = cur.right;
         }
         return cur;
     }
 
     public EasyToken GetEmptyToken() {
-        if (token_group_id == -1) {
+        if (token_groups_id == -1) {
             return this;
         }
         EasyToken start = GetStartOfGroup();
@@ -125,9 +151,9 @@ public class EasyToken {
     }
 
     public EasyToken CreateUpToken() {
-        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+        if (token_groups_id != -1 && !text.equals(")")) {
             EasyToken token = GetEndOfGroup();
-            return token.CreateUpToken();
+            return token.CreateRUpToken();
         }
 
         if (up != null) {
@@ -146,7 +172,7 @@ public class EasyToken {
     }
 
     public EasyToken CreateRUpToken() {
-        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+        if (token_groups_id != -1 && !text.equals(")")) {
             EasyToken token = GetEndOfGroup();
             return token.CreateRUpToken();
         }
@@ -167,9 +193,9 @@ public class EasyToken {
     }
 
     public EasyToken CreateRDownToken() {
-        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+        if (token_groups_id != -1 && !text.equals(")")) {
             EasyToken token = GetEndOfGroup();
-            return token.CreateRDownToken();
+            return token.CreateRUpToken();
         }
 
         if (r_down != null) {
@@ -188,9 +214,9 @@ public class EasyToken {
     }
 
     public EasyToken CreateDownToken() {
-        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+        if (token_groups_id != -1 && !text.equals(")")) {
             EasyToken token = GetEndOfGroup();
-            return token.CreateDownToken();
+            return token.CreateRUpToken();
         }
 
         if (down != null) {
@@ -210,9 +236,9 @@ public class EasyToken {
 
 
     public EasyToken CreateRightToken() {
-        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+        if (token_groups_id != -1 && !text.equals(")")) {
             EasyToken token = GetEndOfGroup();
-            return token.CreateRightToken();
+            return token.CreateRUpToken();
         }
 
         if (right != null) {
@@ -240,11 +266,6 @@ public class EasyToken {
             under_divline2 = new ArrayList<>();
         }
 
-        if (entry_of_group) {
-            right.token_group_id = token_group_id;
-            right.entry_of_group = entry_of_group;
-        }
-
         right.FillDivlineRef();
         CreateBBoxSkeleton();
         return right;
@@ -264,7 +285,9 @@ public class EasyToken {
         // End Debug check
 
         //TODO: add correct process then end numerator token is righter
-        if (token_group_id != -1 && !entry_of_group && !(owner == null || owner.token_group_id != token_group_id)) {
+        if (token_groups_id != -1 &&
+                !((owner == null || owner.token_groups_id != token_groups_id)  // this is start of group
+                        && (end_numerator_token == GetEndOfGroup()))) {
             end_numerator_token = GetEndOfGroup();
             return GetStartOfGroup().CreateUnderDivlineToken(end_numerator_token);
         }
@@ -823,15 +846,16 @@ public class EasyToken {
         return new String(root.ToLatexInternal(0));
     }
 
-    public  StringBuffer ToLatexInternal(int curIdx) {
+    public  StringBuilder ToLatexInternal(int curIdx) {
         int cur_ud = this.under_divline.size() - curIdx - 1;
 
+        // parse division
         if (cur_ud >= 0) {
             EasyToken end_num = this.GetEndOfNumerator(cur_ud);
             EasyToken after_num = end_num.right;
             end_num.right = null;
 
-            StringBuffer div_latex = new StringBuffer("")
+            StringBuilder div_latex = new StringBuilder("")
                     .append("\\frac{")
                     .append(this.ToLatexInternal(curIdx + 1))
                     .append("}{")
@@ -847,6 +871,37 @@ public class EasyToken {
             return div_latex;
         }
 
+        // parse token group
+        if (token_groups_id != -1) {
+            if (right == null || right.token_groups_id != token_groups_id) {
+                return new StringBuilder("");
+            }
+
+            EasyToken start = this;
+            EasyToken end = GetEndOfGroup();
+            EasyToken entry = GetEmptyInGroup();
+            EasyToken after_end = end.right;
+
+            StringBuilder group_name = new StringBuilder("\\"); // contains '('
+            EasyToken cur = start;
+            while (cur != entry) {
+                group_name.append(cur.text);
+                cur = cur.right;
+            }
+            group_name.setCharAt(group_name.length() - 1, '{');
+
+            StringBuilder after_end_latex = new StringBuilder();
+            if (after_end != null) {
+                after_end_latex = after_end.ToLatexInternal(0);
+            }
+
+            return group_name
+                    .append(entry.ToLatexInternal(0))
+                    .append('}')
+                    .append(after_end_latex);
+        }
+
+        // parse simple token
         if (right == null) {
             return GetMyLatexWithIdxes();
         } else {
@@ -854,8 +909,8 @@ public class EasyToken {
         }
     }
 
-    public StringBuffer GetMyLatexWithIdxes () {
-        StringBuffer my_latex = new StringBuffer("");
+    public StringBuilder GetMyLatexWithIdxes () {
+        StringBuilder my_latex = new StringBuilder("");
         my_latex.append(text);
         if (r_up != null) {
             my_latex.append("^{").append(r_up.ToLatexInternal(0)).append("}");
