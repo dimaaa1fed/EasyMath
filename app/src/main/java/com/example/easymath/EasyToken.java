@@ -85,6 +85,7 @@ public class EasyToken {
         }
 
         empty.entry_of_group = true;
+        group_global_id++;
         return empty;
     }
 
