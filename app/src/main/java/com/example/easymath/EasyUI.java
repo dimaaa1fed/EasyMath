@@ -13,6 +13,9 @@ import android.view.View;
 import android.widget.EditText;
 
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import static android.os.ParcelFileDescriptor.MODE_APPEND;
 
@@ -25,10 +28,10 @@ public class EasyUI {
         this.expression = expression;
         this.input_expression = input_expression;
 
-        screenWidth  = Resources.getSystem().getDisplayMetrics().widthPixels;
+        screenWidth = Resources.getSystem().getDisplayMetrics().widthPixels;
         screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels - 200; //Does not same as in canvas
 
-        zoomLineStartX = (int)(screenWidth * (1 - zoomLinePercent));
+        zoomLineStartX = (int) (screenWidth * (1 - zoomLinePercent));
 
         this.handleTouch = new View.OnTouchListener() {
 
@@ -40,11 +43,12 @@ public class EasyUI {
 
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        findButton(x, y);
                         findActiveToken(x, y);
                         handler.postDelayed(mLongPressed, android.view.ViewConfiguration.getLongPressTimeout());
                         Log.i("TAG", "touched down");
 
-                        if (x < zoomLineStartX)  {
+                        if (x < zoomLineStartX) {
                             moveOrZoom = true;
                         }
 
@@ -55,13 +59,20 @@ public class EasyUI {
                             showExampleToken(x, y);
                             return true;
                         }
+                        if (active_btn != null) {
+                            findActiveToken(x, y);
+                            if (active_token != null) {
+                                active_token.CreateTokenGroup(active_btn.getText());
+                                active_btn = null;
+                            }
+                        }
                         if (moveOrZoom) {
                             globalTranslate.Translate(-(x - cur_touch.x), -(y - cur_touch.y));
                             cur_touch = new Vec(x, y);
                             Invalidate();
                         } else {
                             if (y - cur_touch.y > 0) {
-                                if (globalZoom  - zoomStep > 0.1) {
+                                if (globalZoom - zoomStep > 0.1) {
                                     globalZoom -= zoomStep;
                                 }
                                 expression.UpdateScale(globalZoom);
@@ -77,12 +88,10 @@ public class EasyUI {
                         if (!firstTouch) {
                             firstTouch = true;
                             time = System.currentTimeMillis();
-                        }
-                        else
-                        {
+                        } else {
                             if (System.currentTimeMillis() - time <
                                     android.view.ViewConfiguration.getDoubleTapTimeout() * 5
-                                    && y > screenHeight * 3/4) {
+                                    && y > screenHeight * 3 / 4) {
                                 latex_text = expression.ToLatex();
                                 savetext(latex_text);
                             }
@@ -122,6 +131,18 @@ public class EasyUI {
                 goneFlag = false;
             }
         };
+
+        // add funcs
+        easy_buttons = new ArrayList<>();
+        for (String text : Arrays.asList("sin", "cos", "tn", "ctn", "ln")) {
+            EasyTokenBox bbox = new EasyTokenBox(new Vec(-1, -1), new Vec(1, 1));
+            EasyToken token = new EasyToken(bbox, null, text);
+            easy_buttons.add(token);
+        }
+    }
+
+    public ArrayList<EasyToken> getEasy_buttons() {
+        return easy_buttons;
     }
 
     public void Invalidate() {
@@ -136,7 +157,7 @@ public class EasyUI {
         while (it.HasNext()) {
             EasyToken token = it.Next();
             EasyTokenBox bbox = token.bbox;
-            if ( token.value == null) {
+            if (token.value == null) {
                 token.value = new EasyValue(0, 255, 0);
             }
             EasyTokenBox cur_box = EasyToken.ToScreenCoord(screenWidth, screenHeight, bbox);
@@ -153,6 +174,39 @@ public class EasyUI {
         this.start_touch = point;
         this.cur_touch = point;
         return false;
+    }
+
+    public void findButton(int x, int y) {
+        Vec point = new Vec(x, y);
+        // Draw buttons
+        int start_x = screenWidth / 4;
+        int start_y = screenHeight / 2 - 30;
+        int row = 0, column = 0;
+        int bb_w = 100, bb_h = 100, offset = 20;
+        for (EasyToken btn: getEasy_buttons()) {
+            EasyTokenBox bbox = btn.bbox;
+            EasyValue value = btn.value;
+            if (value == null) {
+                value = new EasyValue(0, 255, 0);
+            }
+
+            int cur_x = start_x + (bb_w + offset) * column;
+            if (cur_x > screenWidth / 2 - bb_w)
+            {
+                cur_x = start_x;
+                row += 1;
+                column = 0;
+            }
+            int cur_y = start_y - bb_h * row;
+            column += 1;
+            EasyTokenBox cur_box = EasyToken.ToScreenCoord(screenWidth, screenHeight, bbox);
+            cur_box.Translate(cur_x, -cur_y);
+
+            if (cur_box.IsInside(point)) {
+                active_btn = btn;
+                return;
+            }
+        }
     }
 
     public View.OnTouchListener getHandleTouch() {
@@ -188,29 +242,23 @@ public class EasyUI {
 
         if (angle >= 60 && angle <= 120) {
             active_token.CreateUpToken();
-        }
-        else if (angle >= 30 && angle <= 60) {
+        } else if (angle >= 30 && angle <= 60) {
             active_token.CreateRUpToken();
-        }
-        else if (angle >= 330 || angle <= 30) {
+        } else if (angle >= 330 || angle <= 30) {
             active_token.CreateRightToken();
-        }
-        else if (angle >= 300 && angle <= 330) {
+        } else if (angle >= 300 && angle <= 330) {
             active_token.CreateRDownToken();
-        }
-        else if (angle <= 300 && angle >= 240) {
+        } else if (angle <= 300 && angle >= 240) {
             if (diff.GetLength() < 200) {
                 active_token.CreateDownToken();
             } else {
                 active_token.CreateUnderDivlineToken(active_token);
-            }
+
         } else if (angle >= 120 && angle <= 240) {
             active_token.DeleteToken();
         }
-        else
-        {
+        else {
             // do not have move
-            return;
         }
         revert();
         this.drawView.invalidate();
@@ -228,25 +276,19 @@ public class EasyUI {
         double angle = cur_point.GetAngleToX(start_touch, true);
         if (angle >= 60 && angle <= 120) {
             input_expression.entry_point.CreateUpToken();
-        }
-        else if (angle >= 30 && angle <= 60) {
+        } else if (angle >= 30 && angle <= 60) {
             input_expression.entry_point.CreateRUpToken();
-        }
-        else if (angle >= 330 || angle <= 30) {
+        } else if (angle >= 330 || angle <= 30) {
             input_expression.entry_point.CreateRightToken();
-        }
-        else if (angle >= 300 && angle <= 330) {
+        } else if (angle >= 300 && angle <= 330) {
             input_expression.entry_point.CreateRDownToken();
-        }
-        else if (angle <= 300 && angle >= 240) {
+        } else if (angle <= 300 && angle >= 240) {
             if (diff.GetLength() < 200) {
                 input_expression.entry_point.CreateDownToken();
             } else {
                 input_expression.entry_point.CreateUnderDivlineToken(input_expression.entry_point);
             }
-        }
-        else
-        {
+        } else {
             // do not have move
             return;
         }
@@ -313,7 +355,7 @@ public class EasyUI {
         return globalZoom;
     }
 
-    public void savetext (String textToSave) {
+    public void savetext(String textToSave) {
         String msg = "";
 
         try {
@@ -351,6 +393,7 @@ public class EasyUI {
     private EasyExpression expression;
     private View.OnTouchListener handleTouch;
     private EasyToken active_token;
+    private EasyToken active_btn;
 
     private Vec start_touch;
     private Vec cur_touch;
@@ -375,9 +418,11 @@ public class EasyUI {
     int screenHeight;
 
     final double zoomLinePercent = 0.2;
-    private int  zoomLineStartX;
+    private int zoomLineStartX;
     final double zoomStep = 0.02;
 
     private boolean moveOrZoom = false;
     private Activity app;
+    private ArrayList<EasyToken> easy_buttons;
+
 }

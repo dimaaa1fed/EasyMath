@@ -74,31 +74,37 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onDraw(Canvas canvas) {
-            /*canvas.drawARGB(80, 102, 204, 255);
-
-            canvas.translate(50, 250);
-
-            // вывод текста
-            canvas.drawText(text, 0, 0, fontPaint);
-
-            // линия шириной в текст
-            canvas.drawLine(0, 0, width, 0, fontPaint);
-
-            // посимвольные красные точки
-            canvas.drawCircle(0, 0, 3, redPaint);
-            for (float w : widths) {
-                canvas.translate(w, 0);
-                canvas.drawCircle(0, 0, 3, redPaint);
-            }*/
-
-
-
             center_x = canvas.getWidth() / 2;
             center_y = canvas.getHeight() / 2;
 
             // RENDER TRAVERSAL
             DrawExpression(canvas, expression, easy_ui.GetGlobalTranslate().x, easy_ui.GetGlobalTranslate().y, 1);
             DrawExpression(canvas, input_expression, -200, -600, 1);
+
+            // Draw buttons
+            int start_x = easy_ui.screenWidth / 4;
+            int start_y = easy_ui.screenHeight / 2 - 30;
+            int row = 0, column = 0;
+            int bb_w = 100, bb_h = 100, offset = 20;
+            for (EasyToken btn: easy_ui.getEasy_buttons()) {
+                EasyTokenBox bbox = btn.bbox;
+                EasyValue value = btn.value;
+                if (value == null) {
+                    value = new EasyValue(0, 255, 0);
+                }
+
+                int cur_x = start_x + (bb_w + offset) * column;
+                if (cur_x > easy_ui.screenWidth / 2 - bb_w)
+                {
+                    cur_x = start_x;
+                    row += 1;
+                    column = 0;
+                }
+                int cur_y = start_y - bb_h * row;
+                column += 1;
+
+                DrawTokenRect(btn.getText(), canvas, bbox, value, cur_x + offset, -cur_y, 1, false);
+            }
         }
 
         private void DrawExpression (Canvas canvas, EasyExpression ex, double xoffset, double yoffset, double scale) {
@@ -166,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
                     fontSize += 1;
                 }
 
-                canvas.drawText(text, c_x - (int)(box_w / 2), c_y + (int)(box_h / 2), fontPaint);
+                canvas.drawText(text, c_x - (box_w / 2), c_y + (box_h / 2), fontPaint);
             }
         }
 
