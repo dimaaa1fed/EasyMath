@@ -1,5 +1,6 @@
 package com.example.easymath;
 
+import java.awt.font.TextAttribute;
 import java.util.ArrayList;
 import java.util.Stack;
 import static java.lang.Math.abs;
@@ -10,6 +11,10 @@ public class EasyToken {
     final double div_dist_factor = 1.2;
 
     public double scale = 1;
+
+    public int group_global_id = 0;
+    public int token_group_id = -1;  // -1 - no groupe
+    public boolean entry_of_group = false;
 
     // indexes, or signs
     // small size boxes
@@ -41,7 +46,6 @@ public class EasyToken {
     }
 
 
-
     public EasyToken(EasyTokenBox bbox) {
         this(bbox, null);
     }
@@ -60,7 +64,54 @@ public class EasyToken {
         return this;
     }
 
+    public EasyToken CreateTokenGroup(String name) {
+        ArrayList<EasyToken> token_group = new ArrayList<>();
+
+        // Create right tokens for groupe : name( )
+        EasyToken close_br = CreateRightToken().setText(")");
+        EasyToken empty = CreateRightToken();
+        EasyToken open_br = CreateRightToken().setText("(");
+
+        for (int i = name.length() - 1; i >= 0; i--) {
+            token_group.add(CreateRightToken().setText(String.valueOf(name.charAt(i))));
+        }
+
+        // set id
+        close_br.token_group_id = group_global_id;
+        empty.token_group_id = group_global_id;
+        open_br.token_group_id = group_global_id;
+        for (EasyToken token : token_group) {
+            token.token_group_id = group_global_id;
+        }
+
+        empty.entry_of_group = true;
+        return empty;
+    }
+
+    public EasyToken GetEndOfGroup() {
+        int group_id = token_group_id;
+        EasyToken cur = this;
+        while (cur.right != null && cur.right.token_group_id == group_id) {
+            cur = cur.right;
+        }
+        return cur;
+    }
+
+    public EasyToken GetStartOfGroup() {
+        int group_id = token_group_id;
+        EasyToken cur = this;
+        while (cur.owner != null && cur.owner.token_group_id == group_id) {
+            cur = cur.owner;
+        }
+        return cur;
+    }
+
     public EasyToken CreateUpToken() {
+        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+            EasyToken token = GetEndOfGroup();
+            return token.CreateUpToken();
+        }
+
         if (up != null) {
             EasyToken tmp = up;
             up = new EasyToken(null);
@@ -77,6 +128,11 @@ public class EasyToken {
     }
 
     public EasyToken CreateRUpToken() {
+        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+            EasyToken token = GetEndOfGroup();
+            return token.CreateRUpToken();
+        }
+
         if (r_up != null) {
             EasyToken tmp = r_up;
             r_up = new EasyToken(null);
@@ -93,6 +149,11 @@ public class EasyToken {
     }
 
     public EasyToken CreateRDownToken() {
+        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+            EasyToken token = GetEndOfGroup();
+            return token.CreateRDownToken();
+        }
+
         if (r_down != null) {
             EasyToken tmp = r_down;
             r_down = new EasyToken(null);
@@ -109,6 +170,11 @@ public class EasyToken {
     }
 
     public EasyToken CreateDownToken() {
+        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+            EasyToken token = GetEndOfGroup();
+            return token.CreateDownToken();
+        }
+
         if (down != null) {
             EasyToken tmp = down;
             down = new EasyToken(null);
@@ -126,6 +192,11 @@ public class EasyToken {
 
 
     public EasyToken CreateRightToken() {
+        if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
+            EasyToken token = GetEndOfGroup();
+            return token.CreateRightToken();
+        }
+
         if (right != null) {
             EasyToken tmp = right;
             right = new EasyToken(null);
@@ -151,6 +222,10 @@ public class EasyToken {
             under_divline2 = new ArrayList<>();
         }
 
+        if (entry_of_group) {
+            right.token_group_id = token_group_id;
+        }
+
         right.FillDivlineRef();
         CreateBBoxSkeleton();
         return right;
@@ -168,6 +243,12 @@ public class EasyToken {
             assert (false) : "Bad end numerator token in CreateUnderDivlineToken ";
         }
         // End Debug check
+
+        //TODO: add correct process then end numerator token is righter
+        if (token_group_id != -1 && !entry_of_group && !(owner == null || owner.token_group_id != token_group_id)) {
+            end_numerator_token = GetEndOfGroup();
+            return GetStartOfGroup().CreateUnderDivlineToken(end_numerator_token);
+        }
 
         under_divline.add(0, new EasyToken(null));
         end_numerator_token.under_divline2.add(0, under_divline.get(0));
