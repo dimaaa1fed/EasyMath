@@ -89,7 +89,8 @@ public class EasyUI {
                         else
                         {
                             if (System.currentTimeMillis() - time <
-                                    android.view.ViewConfiguration.getDoubleTapTimeout()) {
+                                    android.view.ViewConfiguration.getDoubleTapTimeout()
+                                && y > screenHeight * 3/4) {
                                 latex_text = expression.ToLatex();
                                 savetext(latex_text);
                             }
@@ -367,4 +368,5 @@ public class EasyUI {
 
     private boolean moveOrZoom = false;
     private Activity app;
+    private static int to_latex_y_start = 600;
 }
