@@ -59,6 +59,17 @@ public class EasyToken {
         }
     }
 
+    public EasyToken(EasyTokenBox bbox_, EasyValue val, String text) {
+        if (bbox_ != null) {
+            bbox = new EasyTokenBox(bbox_);
+        }
+        if (val != null) {
+            value = new EasyValue(val);
+        }
+
+        this.text = "" + text;
+    }
+
     public EasyToken SetValue(EasyValue val) {
         value = val;
         return this;
