@@ -42,6 +42,7 @@ public class EasyUI {
                         if (start_touch != null &&
                                 start_touch.GetAdded(new Vec(-x, -y)).GetLength() <= 4 &&
                                 !goneFlag) {
+                            break;
 
                         }
                         calcNewToken(x, y);
@@ -199,12 +200,12 @@ public class EasyUI {
             return;
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this.drawView.getContext());
-        builder.setTitle("Title");
+        builder.setTitle("Put expression");
 
         // Set up the input
         final EditText input = new EditText(this.drawView.getContext());
         // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        input.setInputType(InputType.TYPE_CLASS_TEXT);
         builder.setView(input);
 
         // Set up the buttons

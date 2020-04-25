@@ -111,24 +111,53 @@ public class MainActivity extends AppCompatActivity {
                 if (value == null) {
                     value = new EasyValue(0, 255, 0);
                 }
-                DrawTokenRect(canvas, bbox, value, xoffset, yoffset);
+                DrawTokenRect(token.getText(), canvas, bbox, value, xoffset, yoffset);
             }
 
             ArrayList<EasyTokenBox> div_lines = ex.GetDivisionLines();
             for (EasyTokenBox line : div_lines) {
-                DrawTokenRect(canvas, line, new EasyValue(0, 0, 0), xoffset, yoffset);
+                DrawTokenRect("", canvas, line, new EasyValue(0, 0, 0), xoffset, yoffset);
             }
         }
 
-        private void DrawTokenRect(Canvas canvas, EasyTokenBox bbox, EasyValue value, double xoffset, double yoffset) {
+        private void DrawTokenRect(String text, Canvas canvas, EasyTokenBox bbox, EasyValue value, double xoffset, double yoffset) {
             EasyTokenBox screenBox = EasyToken.ToScreenCoord(canvas.getWidth(), canvas.getHeight(), bbox);
             screenBox.Translate(xoffset, yoffset);
             Rect myRect = new Rect();
             myRect.set((int)screenBox.left_bottom.x, (int)screenBox.left_bottom.y, (int)screenBox.right_top.x, (int)screenBox.right_top.y);
             Paint paint = new Paint();
             paint.setColor(Color.rgb(value.r, value.g, value.b));
-            paint.setStyle(Paint.Style.FILL);
+            paint.setStyle(Paint.Style.STROKE);
             canvas.drawRect(myRect, paint);
+            // draw text
+            if (text != null && !text.equals(""))
+            {
+                // get center
+                int c_x = myRect.centerX(), c_y = myRect.centerY();
+                int box_w = Math.abs(myRect.width()), box_h = Math.abs(myRect.height());
+                // tune text
+
+                Rect text_bounds = new Rect();
+                fontPaint.getTextBounds(text, 0, text.length(), text_bounds);
+                // make less than rect
+                while (text_bounds.width() > box_w || text_bounds.height() > box_h) {
+                    fontSize -= 1;
+                    fontPaint.setTextSize(fontSize);
+                    fontPaint.getTextBounds(text, 0, text.length(), text_bounds);
+                 }
+                // try to make bigger
+                while (true) {
+                    fontPaint.setTextSize(fontSize + 1);
+                    fontPaint.getTextBounds(text, 0, text.length(), text_bounds);
+                    if (text_bounds.width() > box_w || text_bounds.height() > box_h) {
+                        fontPaint.setTextSize(fontSize);
+                        break;
+                    }
+                    fontSize += 1;
+                }
+
+                canvas.drawText(text, c_x - (int)(box_w / 2), c_y + (int)(box_h / 2), fontPaint);
+            }
         }
 
         @Override
