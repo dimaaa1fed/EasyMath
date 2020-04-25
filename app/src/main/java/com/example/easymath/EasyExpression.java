@@ -42,6 +42,7 @@ public class EasyExpression {
 
     public void UpdateScale(double scale) {
         entry_point.scale = scale;
+        entry_point.div_lines.clear();
         entry_point.CreateBBoxSkeleton();
     }
 

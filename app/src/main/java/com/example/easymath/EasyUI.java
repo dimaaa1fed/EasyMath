@@ -61,7 +61,9 @@ public class EasyUI {
                             Invalidate();
                         } else {
                             if (y - cur_touch.y > 0) {
-                                globalZoom -= zoomStep;
+                                if (globalZoom  - zoomStep > 0.1) {
+                                    globalZoom -= zoomStep;
+                                }
                                 expression.UpdateScale(globalZoom);
                             } else {
                                 globalZoom += zoomStep;
