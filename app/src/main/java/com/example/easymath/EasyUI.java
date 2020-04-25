@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.res.Resources;
+import android.graphics.Rect;
 import android.os.Handler;
 import android.text.InputType;
 import android.util.Log;
@@ -137,7 +138,10 @@ public class EasyUI {
                 token.value = new EasyValue(0, 255, 0);
             }
             EasyTokenBox cur_box = EasyToken.ToScreenCoord(screenWidth, screenHeight, bbox);
-            if (cur_box.IsInside(point.GetTranslated(new Vec(-globalTranslate.x, -globalTranslate.y)))) {
+            cur_box.Translate(globalTranslate.x, globalTranslate.y);
+            cur_box.Scale(globalZoom);
+
+            if (cur_box.IsInside(point)) {
                 this.active_token = token;
                 this.start_touch = point;
                 this.cur_touch = point;

@@ -50,6 +50,7 @@ public class EasyTokenBox {
         right_top.Translate(v);
     }
 
+
     public double Width() {
         return right_top.x - left_bottom.x;
     }

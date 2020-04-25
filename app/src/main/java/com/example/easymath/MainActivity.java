@@ -123,12 +123,13 @@ public class MainActivity extends AppCompatActivity {
             EasyTokenBox screenBox = EasyToken.ToScreenCoord(canvas.getWidth(), canvas.getHeight(), bbox);
             //EasyTokenBox tr = screenBox.GetTransformed(xoffset, yoffset, scale);
             screenBox.Translate(xoffset, yoffset);
+            screenBox.Scale(scale);
 
             Rect myRect = new Rect();
-            myRect.set((int)(screenBox.left_bottom.x * scale),
-                    (int)(screenBox.left_bottom.y * scale),
-                    (int)(screenBox.right_top.x * scale),
-                    (int)(screenBox.right_top.y * scale));
+            myRect.set((int)(screenBox.left_bottom.x),
+                    (int)(screenBox.left_bottom.y),
+                    (int)(screenBox.right_top.x),
+                    (int)(screenBox.right_top.y));
 
             Paint paint = new Paint();
             paint.setColor(Color.rgb(value.r, value.g, value.b));
