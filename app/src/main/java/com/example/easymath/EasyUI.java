@@ -69,6 +69,23 @@ public class EasyUI {
                         }
                         break;
                     case MotionEvent.ACTION_UP:
+                        if (!firstTouch) {
+                            firstTouch = true;
+                            time = System.currentTimeMillis();
+                        }
+                        else
+                        {
+                            if (System.currentTimeMillis() - time <
+                                    android.view.ViewConfiguration.getDoubleTapTimeout() * 5
+                                    && y > screenHeight * 3/4) {
+                                latex_text = expression.ToLatex();
+                                savetext(latex_text);
+                            }
+                            firstTouch = false;
+
+                        }
+
+
                         if (start_touch != null &&
                                 start_touch.GetAdded(new Vec(-x, -y)).GetLength() <= 4 &&
                                 !goneFlag) {
@@ -81,24 +98,6 @@ public class EasyUI {
                         revert();
                         v.performClick();
                         Log.i("TAG", "touched up");
-
-                        if (!firstTouch) {
-                            firstTouch = true;
-                            time = System.currentTimeMillis();
-                        }
-                        else
-                        {
-                            if (System.currentTimeMillis() - time <
-                                    android.view.ViewConfiguration.getDoubleTapTimeout()
-                                && y > screenHeight * 3/4) {
-                                latex_text = expression.ToLatex();
-                                savetext(latex_text);
-                            }
-                            else {
-                                firstTouch = false;
-                            }
-                        }
-
                         break;
                 }
 
