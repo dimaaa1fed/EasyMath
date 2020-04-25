@@ -98,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
             center_y = canvas.getHeight() / 2;
 
             // RENDER TRAVERSAL
-            DrawExpression(canvas, expression, 0, 0);
+            DrawExpression(canvas, expression, easy_ui.GetGlobalTranslate().x, easy_ui.GetGlobalTranslate().y);
             DrawExpression(canvas, input_expression, -200, -600);
         }
 

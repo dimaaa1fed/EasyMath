@@ -37,6 +37,9 @@ public class EasyUI {
                         if (active_token != null) {
                             showExampleToken(x, y);
                         }
+                        globalTranslate.Translate(x - start_touch.x, y - start_touch.y);
+                        start_touch = new Vec(x, y);
+                        Invalidate();
                         break;
                     case MotionEvent.ACTION_UP:
                         if (start_touch != null &&
@@ -70,13 +73,16 @@ public class EasyUI {
         };
     }
 
+    public void Invalidate() {
+        this.drawView.invalidate();
+    }
+
     public boolean findActiveToken(int x, int y) {
         revert();
 
         int width = Resources.getSystem().getDisplayMetrics().widthPixels;
         int height = Resources.getSystem().getDisplayMetrics().heightPixels - 200; //Does not same as in canvas
 
-        // RENDER TRAVERSAL
         Vec point = new Vec(x, y);
         EasyTraversal it = expression.Iterator();
         while (it.HasNext()) {
@@ -92,6 +98,7 @@ public class EasyUI {
                 return true;
             }
         }
+        this.start_touch = point;
         return false;
     }
 
@@ -243,6 +250,10 @@ public class EasyUI {
         this.drawView.invalidate();
     }
 
+    public Vec GetGlobalTranslate() {
+        return new Vec(globalTranslate);
+    }
+
 
     private EasyExpression input_expression;
     private EasyExpression expression;
@@ -258,4 +269,6 @@ public class EasyUI {
     private final Handler handler;
     private Runnable mLongPressed;
     private String mText = "";
+
+    private Vec globalTranslate = new Vec(0, 0);
 }
