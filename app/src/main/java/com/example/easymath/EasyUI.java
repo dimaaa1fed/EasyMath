@@ -1,11 +1,16 @@
 package com.example.easymath;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.media.session.MediaSession;
+import android.os.Handler;
+import android.text.InputType;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.EditText;
 
 public class EasyUI {
     EasyUI(EasyExpression expression, EasyExpression input_expression, View drawView) {
@@ -24,14 +29,21 @@ public class EasyUI {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         findActiveToken(x, y);
+                        handler.postDelayed(mLongPressed, android.view.ViewConfiguration.getLongPressTimeout());
                         Log.i("TAG", "touched down");
                         break;
                     case MotionEvent.ACTION_MOVE:
+                        handler.removeCallbacks(mLongPressed);
                         if (active_token != null) {
                             showExampleToken(x, y);
                         }
                         break;
                     case MotionEvent.ACTION_UP:
+                        if (start_touch != null &&
+                                start_touch.GetAdded(new Vec(-x, -y)).GetLength() <= 4 &&
+                                !goneFlag) {
+
+                        }
                         calcNewToken(x, y);
                         revert();
                         v.performClick();
@@ -40,6 +52,19 @@ public class EasyUI {
                 }
 
                 return true;
+            }
+        };
+
+        // Long tap check
+        this.goneFlag = false;
+        this.handler = new Handler();
+        this.mLongPressed = new Runnable() {
+            public void run() {
+                goneFlag = true;
+                //Code for long click
+                addText();
+                // lol
+                goneFlag = false;
             }
         };
     }
@@ -169,6 +194,54 @@ public class EasyUI {
         this.drawView.invalidate();
     }
 
+    public void addText() {
+        if (active_token == null)
+            return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this.drawView.getContext());
+        builder.setTitle("Title");
+
+        // Set up the input
+        final EditText input = new EditText(this.drawView.getContext());
+        // Specify the type of input expected; this, for example, sets the input as a password, and will mask the text
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        builder.setView(input);
+
+        // Set up the buttons
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mText = input.getText().toString();
+                TokenAddText(mText);
+            }
+        });
+        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+
+        builder.show();
+
+    }
+
+    private void TokenAddText(String Text) {
+        if (Text.equals("") || active_token == null)
+            return;
+        active_token.setText(String.valueOf(Text.charAt(0)));
+
+        EasyToken cur_token = active_token;
+        for (int i = 1; i < Text.length(); i++) {
+            char symb = Text.charAt(i);
+            cur_token = cur_token.CreateRightToken();
+            cur_token.setText(String.valueOf(symb));
+        }
+
+        revert();
+        this.drawView.invalidate();
+    }
+
 
     private EasyExpression input_expression;
     private EasyExpression expression;
@@ -177,4 +250,11 @@ public class EasyUI {
     private Vec start_touch;
     private double minActionLength = 100;
     private View drawView;
+    //Declare this flag globally
+    private boolean goneFlag;
+
+    //Put this into the class
+    private final Handler handler;
+    private Runnable mLongPressed;
+    private String mText = "";
 }

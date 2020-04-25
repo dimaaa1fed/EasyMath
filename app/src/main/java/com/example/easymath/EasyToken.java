@@ -28,6 +28,7 @@ public class EasyToken {
     // bound_box in some coordinate system: render transform it
     public EasyTokenBox bbox;
     public EasyValue value;
+    private String text = "";
 
     public ArrayList<EasyTokenBox> div_lines; // refs to EasyExpression
     public EasyTokenBox my_div_line; // start denumerator has it
@@ -36,6 +37,8 @@ public class EasyToken {
 
     public EasyToken() {
     }
+
+
 
     public EasyToken(EasyTokenBox bbox) {
         this(bbox, null);
@@ -701,6 +704,14 @@ public class EasyToken {
         tr_box.InverseY();
         tr_box.Translate(width / 2.0f, height / 2.0f);
         return tr_box;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 }
 
