@@ -331,9 +331,10 @@ public class EasyUI {
         if (text_copy.equals("") || active_token == null)
             return;
 
-        active_token.setText(String.valueOf(text_copy.charAt(0)));
+        EasyToken empty = active_token.GetEmptyToken();
+        empty.setText(String.valueOf(text_copy.charAt(0)));
 
-        EasyToken cur_token = active_token;
+        EasyToken cur_token = empty;
         for (int i = 1; i < text_copy.length(); i++) {
             char symb = text_copy.charAt(i);
             cur_token = cur_token.CreateRightToken();
