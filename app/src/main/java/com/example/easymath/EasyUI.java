@@ -110,7 +110,7 @@ public class EasyUI {
                 token.value = new EasyValue(0, 255, 0);
             }
             EasyTokenBox cur_box = EasyToken.ToScreenCoord(screenWidth, screenHeight, bbox);
-            if (cur_box.IsInside(point)) {
+            if (cur_box.IsInside(point.GetTranslated(new Vec(-globalTranslate.x, -globalTranslate.y)))) {
                 this.active_token = token;
                 this.start_touch = point;
                 this.cur_touch = point;
