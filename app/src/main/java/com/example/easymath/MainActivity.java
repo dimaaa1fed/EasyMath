@@ -7,8 +7,6 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -21,7 +19,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         this.draw_view = new DrawView(this);
-        this.easy_ui = new EasyUI(this.draw_view.expression, this.draw_view.input_expression, this.draw_view);
+        this.easy_ui = new EasyUI(this.draw_view.expression, this.draw_view.input_expression,
+                this.draw_view, this);
 
         this.draw_view.setOnTouchListener(easy_ui.getHandleTouch());
 
