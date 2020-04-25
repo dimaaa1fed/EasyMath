@@ -98,11 +98,11 @@ public class MainActivity extends AppCompatActivity {
             center_y = canvas.getHeight() / 2;
 
             // RENDER TRAVERSAL
-            DrawExpression(canvas, expression, easy_ui.GetGlobalTranslate().x, easy_ui.GetGlobalTranslate().y);
-            DrawExpression(canvas, input_expression, -200, -600);
+            DrawExpression(canvas, expression, easy_ui.GetGlobalTranslate().x, easy_ui.GetGlobalTranslate().y, easy_ui.GetGlobalZoom());
+            DrawExpression(canvas, input_expression, -200, -600, 1);
         }
 
-        private void DrawExpression (Canvas canvas, EasyExpression ex, double xoffset, double yoffset) {
+        private void DrawExpression (Canvas canvas, EasyExpression ex, double xoffset, double yoffset, double scale) {
             EasyTraversal it = ex.Iterator();
             while (it.HasNext()) {
                 EasyToken token = it.Next();
@@ -111,20 +111,26 @@ public class MainActivity extends AppCompatActivity {
                 if (value == null) {
                     value = new EasyValue(0, 255, 0);
                 }
-                DrawTokenRect(token.getText(), canvas, bbox, value, xoffset, yoffset);
+                DrawTokenRect(token.getText(), canvas, bbox, value, xoffset, yoffset, scale);
             }
 
             ArrayList<EasyTokenBox> div_lines = ex.GetDivisionLines();
             for (EasyTokenBox line : div_lines) {
-                DrawTokenRect("", canvas, line, new EasyValue(0, 0, 0), xoffset, yoffset);
+                DrawTokenRect("", canvas, line, new EasyValue(0, 0, 0), xoffset, yoffset, scale);
             }
         }
 
-        private void DrawTokenRect(String text, Canvas canvas, EasyTokenBox bbox, EasyValue value, double xoffset, double yoffset) {
+        private void DrawTokenRect(String text, Canvas canvas, EasyTokenBox bbox, EasyValue value, double xoffset, double yoffset, double scale) {
             EasyTokenBox screenBox = EasyToken.ToScreenCoord(canvas.getWidth(), canvas.getHeight(), bbox);
+            //EasyTokenBox tr = screenBox.GetTransformed(xoffset, yoffset, scale);
             screenBox.Translate(xoffset, yoffset);
+
             Rect myRect = new Rect();
-            myRect.set((int)screenBox.left_bottom.x, (int)screenBox.left_bottom.y, (int)screenBox.right_top.x, (int)screenBox.right_top.y);
+            myRect.set((int)(screenBox.left_bottom.x * scale),
+                    (int)(screenBox.left_bottom.y * scale),
+                    (int)(screenBox.right_top.x * scale),
+                    (int)(screenBox.right_top.y * scale));
+
             Paint paint = new Paint();
             paint.setColor(Color.rgb(value.r, value.g, value.b));
             paint.setStyle(Paint.Style.STROKE);
