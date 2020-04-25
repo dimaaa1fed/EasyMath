@@ -107,6 +107,23 @@ public class EasyToken {
         return cur;
     }
 
+    // call: start group token
+    public EasyToken GetEmptyInGroup() {
+        EasyToken cur = this;
+        while (!cur.entry_of_group) {
+            cur = cur.right;
+        }
+        return cur;
+    }
+
+    public EasyToken GetEmptyToken() {
+        if (token_group_id == -1) {
+            return this;
+        }
+        EasyToken start = GetStartOfGroup();
+        return start.GetEmptyInGroup();
+    }
+
     public EasyToken CreateUpToken() {
         if (token_group_id != -1 && !entry_of_group && !text.equals(")")) {
             EasyToken token = GetEndOfGroup();
@@ -225,6 +242,7 @@ public class EasyToken {
 
         if (entry_of_group) {
             right.token_group_id = token_group_id;
+            right.entry_of_group = entry_of_group;
         }
 
         right.FillDivlineRef();
