@@ -60,10 +60,12 @@ public class EasyUI {
                             Invalidate();
                         } else {
                             if (y - cur_touch.y > 0) {
-                                globalZoom += zoomStep;
-                            } else {
                                 globalZoom -= zoomStep;
+                            } else {
+                                globalZoom += zoomStep;
                             }
+                            Invalidate();
+                            Log.i("TAG", new Double(globalZoom).toString());
                         }
                         break;
                     case MotionEvent.ACTION_UP:
@@ -214,8 +216,6 @@ public class EasyUI {
 
 
         double angle = cur_point.GetAngleToX(start_touch, true);
-        Log.i("TAG", new Double(angle).toString());
-
         if (angle >= 60 && angle <= 120) {
             input_expression.entry_point.CreateUpToken();
         }

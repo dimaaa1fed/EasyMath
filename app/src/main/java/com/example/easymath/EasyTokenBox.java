@@ -70,6 +70,17 @@ public class EasyTokenBox {
         return right_top.GetAdded(new Vec(0, -Height()));
     }
 
+    public EasyTokenBox GetTransformed(double xoffset, double yoffset, double scale) {
+        EasyTokenBox transformed = new EasyTokenBox(this);
+        Vec center = Center();
+        transformed.Translate(center.GetScaled(-1));
+        transformed.left_bottom.Scale(scale);
+        transformed.right_top.Scale(scale);
+        transformed.Translate(center);
+        transformed.Translate(xoffset, yoffset);
+        return transformed;
+    }
+
     public Vec left_bottom;
     public Vec right_top;
 }
