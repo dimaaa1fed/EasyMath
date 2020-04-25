@@ -204,6 +204,8 @@ public class EasyUI {
             } else {
                 active_token.CreateUnderDivlineToken(active_token);
             }
+        } else if (angle >= 120 && angle <= 240) {
+            active_token.DeleteToken();
         }
         else
         {

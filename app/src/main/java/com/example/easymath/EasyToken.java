@@ -62,6 +62,70 @@ public class EasyToken {
         return this;
     }
 
+    public void DeleteToken() {
+        // delete full group
+        if (token_group_id != -1) {
+            EasyToken start = GetStartOfGroup();
+            EasyToken end = GetEndOfGroup();
+            Remove(start, end);
+            return;
+        }
+
+        // delete if one in denumerator
+        if (WhoAmI(this) == EasyOwnerType.UNDER_DIVLINE && this.right == null) {
+            this.setText("");
+            return;
+        }
+
+        // delete if one in numerator
+        if (this.under_divline.size() > 0 &&
+                this.under_divline2.size() == this.under_divline.size()) {
+            if (this.text.equals("")) {
+                this.setText("");
+            } else {
+                Remove(this, this);
+            }
+            return;
+        }
+
+        // delete first in numerator if has right
+        if (this.under_divline.size() > 0) {
+            ArrayList<EasyToken> to_del = new ArrayList<>();
+            for (EasyToken ud : this.under_divline) {
+                if (this.under_divline2.contains(ud)) {
+                    to_del.add(ud);
+                }
+            }
+            for (EasyToken del : to_del) {
+                under_divline.remove(del);
+            }
+
+            this.right.under_divline.addAll(this.under_divline);
+
+            Remove(this, this);
+            return;
+        }
+
+        if (this.under_divline2.size() > 0) {
+            this.owner.under_divline2.addAll(this.under_divline2);
+            Remove(this, this);
+            return;
+        }
+
+        Remove(this, this);
+    }
+
+    public void Remove (EasyToken from, EasyToken to)
+    {
+        if (from.owner != null) {
+            from.owner.right = to.right;
+        }
+        if (to.right != null) {
+            to.right.owner = from.owner;
+        }
+        CreateBBoxSkeleton();
+    }
+
     public EasyToken CreateTokenGroup(String name) {
         ArrayList<EasyToken> token_group = new ArrayList<>();
 
@@ -146,7 +210,7 @@ public class EasyToken {
             return this;
         }
         EasyToken start = GetStartOfGroup();
-        return start.GetEmptyInGroup();
+        return start.GetEmptyInGroup().GetEmptyToken();
     }
 
     public EasyToken CreateUpToken() {
