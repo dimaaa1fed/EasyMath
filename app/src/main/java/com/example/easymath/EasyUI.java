@@ -46,9 +46,10 @@ public class EasyUI {
                         handler.removeCallbacks(mLongPressed);
                         if (active_token != null) {
                             showExampleToken(x, y);
+                            return true;
                         }
                         if (moveOrZoom) {
-                            globalTranslate.Translate(x - cur_touch.x, y - cur_touch.y);
+                            globalTranslate.Translate(-(x - cur_touch.x), -(y - cur_touch.y));
                             cur_touch = new Vec(x, y);
                             Invalidate();
                         } else {
