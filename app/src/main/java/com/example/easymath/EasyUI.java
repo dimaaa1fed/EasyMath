@@ -139,7 +139,7 @@ public class EasyUI {
             }
             EasyTokenBox cur_box = EasyToken.ToScreenCoord(screenWidth, screenHeight, bbox);
             cur_box.Translate(globalTranslate.x, globalTranslate.y);
-            cur_box.Scale(globalZoom);
+            //cur_box.Scale(globalZoom);
 
             if (cur_box.IsInside(point)) {
                 this.active_token = token;
