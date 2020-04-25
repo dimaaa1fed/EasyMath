@@ -38,7 +38,11 @@ public class EasyExpression {
         }
 
         return res;
-    };
+    }
+
+    public String ToLatex () {
+        return entry_point.ToLatex();
+    }
 
     public double div_lines_height = 0.1;
     public ArrayList<EasyTokenBox> div_lines = new ArrayList<>();

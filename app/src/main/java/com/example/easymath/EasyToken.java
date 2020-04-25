@@ -710,8 +710,58 @@ public class EasyToken {
         return text;
     }
 
-    public void setText(String text) {
+    public EasyToken setText(String text) {
         this.text = text;
+        return this;
+    }
+
+
+    public String ToLatex () {
+        EasyToken root = GetRoot();
+        return new String(root.ToLatexInternal(0));
+    }
+
+    public  StringBuffer ToLatexInternal(int curIdx) {
+        int cur_ud = this.under_divline.size() - curIdx - 1;
+
+        if (cur_ud >= 0) {
+            EasyToken end_num = this.GetEndOfNumerator(cur_ud);
+            EasyToken after_num = end_num.right;
+            end_num.right = null;
+
+            StringBuffer div_latex = new StringBuffer("")
+                    .append("\frac{")
+                    .append(this.ToLatexInternal(curIdx + 1))
+                    .append("}{")
+                    .append(this.under_divline.get(cur_ud).ToLatexInternal(0))
+                    .append("}");
+
+            end_num.right = after_num;
+
+            if (after_num != null) {
+                div_latex.append(after_num.ToLatexInternal(0));
+            }
+
+            return div_latex;
+        }
+
+        if (right == null) {
+            return GetMyLatexWithIdxes();
+        } else {
+            return GetMyLatexWithIdxes().append(right.ToLatexInternal(0));
+        }
+    }
+
+    public StringBuffer GetMyLatexWithIdxes () {
+        StringBuffer my_latex = new StringBuffer("");
+        my_latex.append(text);
+        if (r_up != null) {
+            my_latex.append("^{").append(r_up.ToLatexInternal(0)).append("}");
+        }
+        if (r_down != null){
+            my_latex.append("_{").append(r_down.ToLatexInternal(0).append("}"));
+        }
+        return my_latex;
     }
 }
 
