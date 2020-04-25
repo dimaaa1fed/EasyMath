@@ -285,13 +285,15 @@ public class EasyUI {
     }
 
     private void TokenAddText(String Text) {
-        if (Text.equals("") || active_token == null)
+        String text_copy = Text.replace(" ", "");
+        if (text_copy.equals("") || active_token == null)
             return;
-        active_token.setText(String.valueOf(Text.charAt(0)));
+
+        active_token.setText(String.valueOf(text_copy.charAt(0)));
 
         EasyToken cur_token = active_token;
-        for (int i = 1; i < Text.length(); i++) {
-            char symb = Text.charAt(i);
+        for (int i = 1; i < text_copy.length(); i++) {
+            char symb = text_copy.charAt(i);
             cur_token = cur_token.CreateRightToken();
             cur_token.setText(String.valueOf(symb));
         }
