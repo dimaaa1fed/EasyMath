@@ -62,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
 
             fontPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
             fontPaint.setTextSize(fontSize);
-            fontPaint.setStyle(Paint.Style.STROKE);
+            fontPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
             // ширина текста
             width = fontPaint.measureText(text);

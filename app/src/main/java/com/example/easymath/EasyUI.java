@@ -16,7 +16,7 @@ import java.io.OutputStreamWriter;
 import static android.os.ParcelFileDescriptor.MODE_APPEND;
 
 public class EasyUI {
-    EasyUI(EasyExpression expression, final EasyExpression input_expression, View drawView, Activity app) {
+    EasyUI(final EasyExpression expression, final EasyExpression input_expression, View drawView, Activity app) {
         this.app = app;
         revert();
         this.drawView = drawView;
@@ -88,7 +88,7 @@ public class EasyUI {
                         {
                             if (System.currentTimeMillis() - time <
                                     android.view.ViewConfiguration.getDoubleTapTimeout()) {
-                                latex_text = input_expression.ToLatex();
+                                latex_text = expression.ToLatex();
                                 savetext(latex_text);
                             }
                             else {
