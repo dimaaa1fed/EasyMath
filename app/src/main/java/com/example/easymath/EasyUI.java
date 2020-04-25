@@ -368,5 +368,4 @@ public class EasyUI {
 
     private boolean moveOrZoom = false;
     private Activity app;
-    private static int to_latex_y_start = 600;
 }
