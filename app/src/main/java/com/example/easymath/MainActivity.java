@@ -97,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
             center_y = canvas.getHeight() / 2;
 
             // RENDER TRAVERSAL
-            DrawExpression(canvas, expression, easy_ui.GetGlobalTranslate().x, easy_ui.GetGlobalTranslate().y, easy_ui.GetGlobalZoom());
+            DrawExpression(canvas, expression, easy_ui.GetGlobalTranslate().x, easy_ui.GetGlobalTranslate().y, 1);
             DrawExpression(canvas, input_expression, -200, -600, 1);
         }
 
@@ -110,16 +110,16 @@ public class MainActivity extends AppCompatActivity {
                 if (value == null) {
                     value = new EasyValue(0, 255, 0);
                 }
-                DrawTokenRect(token.getText(), canvas, bbox, value, xoffset, yoffset, scale);
+                DrawTokenRect(token.getText(), canvas, bbox, value, xoffset, yoffset, scale, false);
             }
 
             ArrayList<EasyTokenBox> div_lines = ex.GetDivisionLines();
             for (EasyTokenBox line : div_lines) {
-                DrawTokenRect("", canvas, line, new EasyValue(0, 0, 0), xoffset, yoffset, scale);
+                DrawTokenRect("", canvas, line, new EasyValue(0, 0, 0), xoffset, yoffset, scale, true);
             }
         }
 
-        private void DrawTokenRect(String text, Canvas canvas, EasyTokenBox bbox, EasyValue value, double xoffset, double yoffset, double scale) {
+        private void DrawTokenRect(String text, Canvas canvas, EasyTokenBox bbox, EasyValue value, double xoffset, double yoffset, double scale, boolean is_lines) {
             EasyTokenBox screenBox = EasyToken.ToScreenCoord(canvas.getWidth(), canvas.getHeight(), bbox);
             //EasyTokenBox tr = screenBox.GetTransformed(xoffset, yoffset, scale);
             screenBox.Translate(xoffset, yoffset);
@@ -132,7 +132,11 @@ public class MainActivity extends AppCompatActivity {
 
             Paint paint = new Paint();
             paint.setColor(Color.rgb(value.r, value.g, value.b));
-            paint.setStyle(Paint.Style.STROKE);
+            if (is_lines) {
+                paint.setStyle(Paint.Style.FILL);
+            } else {
+                paint.setStyle(Paint.Style.STROKE);
+            }
             canvas.drawRect(myRect, paint);
             // draw text
             if (text != null && !text.equals(""))

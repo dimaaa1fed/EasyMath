@@ -40,6 +40,11 @@ public class EasyExpression {
         return res;
     }
 
+    public void UpdateScale(double scale) {
+        entry_point.scale = scale;
+        entry_point.CreateBBoxSkeleton();
+    }
+
     public String ToLatex () {
         return entry_point.ToLatex();
     }

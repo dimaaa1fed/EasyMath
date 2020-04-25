@@ -9,6 +9,8 @@ public class EasyToken {
     final double dist_factor = 1 + 0.1; // for u, d, ru, rd
     final double div_dist_factor = 1.2;
 
+    public double scale = 1;
+
     // indexes, or signs
     // small size boxes
     public EasyToken up = null;
@@ -122,6 +124,7 @@ public class EasyToken {
         return down;
     }
 
+
     public EasyToken CreateRightToken() {
         if (right != null) {
             EasyToken tmp = right;
@@ -135,7 +138,6 @@ public class EasyToken {
         }
 
         // update end denumerator/numerator ref
-        //TODO: Add CreateRightToken where this ref doesn't updates (To I/O)
         if (owner2 != null) {
             owner2.under_divline2.set(0, right);
             right.owner2 = owner2;
@@ -505,7 +507,7 @@ public class EasyToken {
 
 
     public EasyTokenBox CreateRootBbox(){
-        return new EasyTokenBox(new Vec(-1 * 0.7, -1), new Vec(1 * 0.7, 1));
+        return new EasyTokenBox(new Vec(-1 * 0.7 * scale, -1 * scale), new Vec(1 * 0.7 * scale, 1 * scale));
     }
 
 
@@ -730,7 +732,7 @@ public class EasyToken {
             end_num.right = null;
 
             StringBuffer div_latex = new StringBuffer("")
-                    .append("\frac{")
+                    .append("\\frac{")
                     .append(this.ToLatexInternal(curIdx + 1))
                     .append("}{")
                     .append(this.under_divline.get(cur_ud).ToLatexInternal(0))

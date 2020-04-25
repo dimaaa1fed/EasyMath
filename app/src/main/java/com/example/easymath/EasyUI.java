@@ -61,8 +61,10 @@ public class EasyUI {
                         } else {
                             if (y - cur_touch.y > 0) {
                                 globalZoom -= zoomStep;
+                                expression.UpdateScale(globalZoom);
                             } else {
                                 globalZoom += zoomStep;
+                                expression.UpdateScale(globalZoom);
                             }
                             Invalidate();
                             Log.i("TAG", new Double(globalZoom).toString());
