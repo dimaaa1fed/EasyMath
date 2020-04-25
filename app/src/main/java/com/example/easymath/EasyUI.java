@@ -3,10 +3,8 @@ package com.example.easymath;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.res.Resources;
-import android.media.session.MediaSession;
 import android.os.Handler;
 import android.text.InputType;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,8 +14,15 @@ public class EasyUI {
     EasyUI(EasyExpression expression, EasyExpression input_expression, View drawView) {
         revert();
         this.drawView = drawView;
+
         this.expression = expression;
         this.input_expression = input_expression;
+
+        screenWidth  = Resources.getSystem().getDisplayMetrics().widthPixels;
+        screenHeight = Resources.getSystem().getDisplayMetrics().heightPixels - 200; //Does not same as in canvas
+
+        zoomLineStartX = (int)(screenWidth * (1 - zoomLinePercent));
+
         this.handleTouch = new View.OnTouchListener() {
 
             @Override
@@ -31,15 +36,28 @@ public class EasyUI {
                         findActiveToken(x, y);
                         handler.postDelayed(mLongPressed, android.view.ViewConfiguration.getLongPressTimeout());
                         Log.i("TAG", "touched down");
+
+                        if (x < zoomLineStartX)  {
+                            moveOrZoom = true;
+                        }
+
                         break;
                     case MotionEvent.ACTION_MOVE:
                         handler.removeCallbacks(mLongPressed);
                         if (active_token != null) {
                             showExampleToken(x, y);
                         }
-                        globalTranslate.Translate(x - start_touch.x, y - start_touch.y);
-                        start_touch = new Vec(x, y);
-                        Invalidate();
+                        if (moveOrZoom) {
+                            globalTranslate.Translate(x - cur_touch.x, y - cur_touch.y);
+                            cur_touch = new Vec(x, y);
+                            Invalidate();
+                        } else {
+                            if (y - cur_touch.y > 0) {
+                                globalZoom += zoomStep;
+                            } else {
+                                globalZoom -= zoomStep;
+                            }
+                        }
                         break;
                     case MotionEvent.ACTION_UP:
                         if (start_touch != null &&
@@ -48,6 +66,8 @@ public class EasyUI {
                             break;
 
                         }
+                        moveOrZoom = false;
+
                         calcNewToken(x, y);
                         revert();
                         v.performClick();
@@ -80,9 +100,6 @@ public class EasyUI {
     public boolean findActiveToken(int x, int y) {
         revert();
 
-        int width = Resources.getSystem().getDisplayMetrics().widthPixels;
-        int height = Resources.getSystem().getDisplayMetrics().heightPixels - 200; //Does not same as in canvas
-
         Vec point = new Vec(x, y);
         EasyTraversal it = expression.Iterator();
         while (it.HasNext()) {
@@ -91,7 +108,7 @@ public class EasyUI {
             if ( token.value == null) {
                 token.value = new EasyValue(0, 255, 0);
             }
-            EasyTokenBox cur_box = EasyToken.ToScreenCoord(width, height, bbox);
+            EasyTokenBox cur_box = EasyToken.ToScreenCoord(screenWidth, screenHeight, bbox);
             if (cur_box.IsInside(point)) {
                 this.active_token = token;
                 this.start_touch = point;
@@ -99,6 +116,7 @@ public class EasyUI {
             }
         }
         this.start_touch = point;
+        this.cur_touch = point;
         return false;
     }
 
@@ -117,6 +135,7 @@ public class EasyUI {
     public void revert() {
         this.active_token = null;
         this.start_touch = null;
+        this.cur_touch = null;
     }
 
     public void calcNewToken(int x, int y) {
@@ -254,12 +273,18 @@ public class EasyUI {
         return new Vec(globalTranslate);
     }
 
+    public float GetGlobalZoom() {
+        return globalZoom;
+    }
 
     private EasyExpression input_expression;
     private EasyExpression expression;
     private View.OnTouchListener handleTouch;
     private EasyToken active_token;
+
     private Vec start_touch;
+    private Vec cur_touch;
+
     private double minActionLength = 100;
     private View drawView;
     //Declare this flag globally
@@ -271,4 +296,14 @@ public class EasyUI {
     private String mText = "";
 
     private Vec globalTranslate = new Vec(0, 0);
+    private float globalZoom = 1;
+
+    int screenWidth;
+    int screenHeight;
+
+    final double zoomLinePercent = 0.2;
+    private int  zoomLineStartX;
+    final double zoomStep = 0.02;
+
+    private boolean moveOrZoom = false;
 }
