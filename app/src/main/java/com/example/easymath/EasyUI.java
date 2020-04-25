@@ -133,7 +133,7 @@ public class EasyUI {
                 token.value = new EasyValue(0, 255, 0);
             }
             EasyTokenBox cur_box = EasyToken.ToScreenCoord(screenWidth, screenHeight, bbox);
-            if (cur_box.IsInside(point)) {
+            if (cur_box.IsInside(point.GetTranslated(new Vec(-globalTranslate.x, -globalTranslate.y)))) {
                 this.active_token = token;
                 this.start_touch = point;
                 this.cur_touch = point;
@@ -175,20 +175,20 @@ public class EasyUI {
         }
 
         double angle = cur_point.GetAngleToX(start_touch, true);
+
         if (angle >= 60 && angle <= 120) {
             active_token.CreateUpToken();
         }
         else if (angle >= 30 && angle <= 60) {
-            active_token.CreateRDownToken();
-        }
-        else if (angle >= -30 && angle <= 30)
-        {
-            active_token.CreateRightToken();
-        }
-        else if (angle >= -60 && angle <= -30) {
             active_token.CreateRUpToken();
         }
-        else if (angle >= -120 && angle <= -60) {
+        else if (angle >= 330 || angle <= 30) {
+            active_token.CreateRightToken();
+        }
+        else if (angle >= 300 && angle <= 330) {
+            active_token.CreateRDownToken();
+        }
+        else if (angle <= 300 && angle >= 240) {
             if (diff.GetLength() < 200) {
                 active_token.CreateDownToken();
             } else {
@@ -198,7 +198,6 @@ public class EasyUI {
         else
         {
             // do not have move
-            Log.i("TAG", "Wrong angle");
             return;
         }
         revert();
@@ -221,16 +220,15 @@ public class EasyUI {
             input_expression.entry_point.CreateUpToken();
         }
         else if (angle >= 30 && angle <= 60) {
-            input_expression.entry_point.CreateRDownToken();
-        }
-        else if (angle >= -30 && angle <= 30)
-        {
-            input_expression.entry_point.CreateRightToken();
-        }
-        else if (angle >= -60 && angle <= -30) {
             input_expression.entry_point.CreateRUpToken();
         }
-        else if (angle >= -120 && angle <= -60) {
+        else if (angle >= 330 || angle <= 30) {
+            input_expression.entry_point.CreateRightToken();
+        }
+        else if (angle >= 300 && angle <= 330) {
+            input_expression.entry_point.CreateRDownToken();
+        }
+        else if (angle <= 300 && angle >= 240) {
             if (diff.GetLength() < 200) {
                 input_expression.entry_point.CreateDownToken();
             } else {

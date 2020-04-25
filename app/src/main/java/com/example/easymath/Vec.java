@@ -54,15 +54,20 @@ public class Vec {
         return x * v.x + y * v.y;
     }
 
+    public void Normalize () {
+        x /= GetLength();
+        y /= GetLength();
+    }
+
     public double GetAngleToX(Vec v, boolean to_degrees) {
+        Vec radial = new Vec(x - v.x, y - v.y);
+        radial.Normalize();
         double res = 0;
-        if (v.x == v.y) {
-            res =  PI / 2;
-        }
-        else
-        {
-            double k = (v.y - y) / (v.x - x);
-            res = atan(k);
+
+        if (-radial.y >= 0) {
+            res = Math.acos(radial.x);
+        } else {
+            res = Math.PI + Math.acos(-radial.x);
         }
         return to_degrees ? Math.toDegrees(res) : res;
     }
