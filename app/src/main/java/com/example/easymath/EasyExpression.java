@@ -12,7 +12,9 @@ public class EasyExpression {
 
     public void Reset () {
         div_lines.clear();
+        double scale = entry_point.scale;
         entry_point = new EasyToken(div_lines, true);
+        entry_point.scale = scale;
         entry_point.expression = this;
         entry_point.CreateBBoxSkeleton();
     }
