@@ -43,6 +43,9 @@ public class EasyToken {
     public EasyToken() {
     }
 
+    public EasyToken(ArrayList<EasyTokenBox> div_lines_, boolean hack) {
+        div_lines = div_lines_;
+    }
 
     public EasyToken(EasyTokenBox bbox) {
         this(bbox, null);
@@ -190,6 +193,21 @@ public class EasyToken {
         return cur.right;
     }
 
+    // call: on group name
+    public EasyToken GetEndOfGroupName() {
+        EasyToken start = GetStartOfGroup();
+
+        int group_id = token_group_id;
+        EasyToken cur = this;
+
+        // go to entry
+        while (cur.right != null && cur.right.token_group_id == group_id) {
+            cur = cur.right;
+        }
+
+        return cur.owner; // before open braket
+    }
+
     public EasyToken GetStartOfGroup() {
         EasyToken cur = this;
         int group_id = token_group_id;
@@ -246,8 +264,8 @@ public class EasyToken {
     }
 
     public EasyToken CreateRUpToken() {
-        if (token_group_id != -1 && !text.equals(")")) {
-            EasyToken token = GetEndOfGroup();
+        if (token_group_id != -1 && (right != null && !right.text.equals("("))) {
+            EasyToken token = GetEndOfGroupName();
             return token.CreateRUpToken();
         }
 
@@ -267,9 +285,9 @@ public class EasyToken {
     }
 
     public EasyToken CreateRDownToken() {
-        if (token_group_id != -1 && !text.equals(")")) {
-            EasyToken token = GetEndOfGroup();
-            return token.CreateRUpToken();
+        if (token_group_id != -1 && (right != null && !right.text.equals("("))) {
+            EasyToken token = GetEndOfGroupName();
+            return token.CreateRDownToken();
         }
 
         if (r_down != null) {
@@ -699,6 +717,7 @@ public class EasyToken {
 
     public void CreateBBoxSkeleton() {
         EasyToken root = GetRoot();
+        root.div_lines.clear();
         root.UpdateBboxNeightboors();
     }
 
@@ -917,10 +936,10 @@ public class EasyToken {
 
     public String ToLatex () {
         EasyToken root = GetRoot();
-        return new String(root.ToLatexInternal(0));
+        return new String(root.ToLatexExpression(0));
     }
 
-    public  StringBuilder ToLatexInternal(int curIdx) {
+    public  StringBuilder ToLatexExpression(int curIdx) {
         int cur_ud = this.under_divline.size() - curIdx - 1;
 
         // parse division
@@ -931,23 +950,23 @@ public class EasyToken {
 
             StringBuilder div_latex = new StringBuilder("")
                     .append("\\frac{")
-                    .append(this.ToLatexInternal(curIdx + 1))
+                    .append(this.ToLatexExpression(curIdx + 1))
                     .append("}{")
-                    .append(this.under_divline.get(cur_ud).ToLatexInternal(0))
+                    .append(this.under_divline.get(cur_ud).ToLatexExpression(0))
                     .append("}");
 
             end_num.right = after_num;
 
             if (after_num != null) {
-                div_latex.append(after_num.ToLatexInternal(0));
+                div_latex.append(after_num.ToLatexExpression(0));
             }
 
             return div_latex;
         }
 
-        // parse token group
-        if (token_group_id != -1) {
-            if (right == null || right.token_group_id != token_group_id) {
+         // parse token group
+         if (token_group_id != -1) {
+             if (right == null || right.token_group_id != token_group_id) {
                 return new StringBuilder("");
             }
 
@@ -955,42 +974,51 @@ public class EasyToken {
             EasyToken end = GetEndOfGroup();
             EasyToken entry = GetEmptyInGroup();
             EasyToken after_end = end.right;
+            EasyToken name_end = GetEndOfGroupName();
 
-            StringBuilder group_name = new StringBuilder("\\"); // contains '('
+            StringBuilder group_name = new StringBuilder("\\");              // copy group name
             EasyToken cur = start;
-            while (cur != entry) {
+            while (!cur.text.equals("(")) {
                 group_name.append(cur.text);
                 cur = cur.right;
             }
-            group_name.setCharAt(group_name.length() - 1, '{');
+
+            int group_len = group_name.length();
+            group_name.append(name_end.ToLatexComplexToken());              // parse indexes
+            group_name.delete(group_len - 1, group_len);                // remove duplicate
+            group_name.append('{');                                         // manually add '{' instead '('
 
             StringBuilder after_end_latex = new StringBuilder();
             if (after_end != null) {
-                after_end_latex = after_end.ToLatexInternal(0);
+                after_end_latex = after_end.ToLatexExpression(0);     // parse rest part of expression
             }
 
-            return group_name
-                    .append(entry.ToLatexInternal(0))
-                    .append('}')
-                    .append(after_end_latex);
+             StringBuilder indxes = end.ToLatexComplexToken();  // indexes after ')'
+             indxes.delete(0, 1);                               // remove duplicate ')'
+
+             return group_name
+                     .append(entry.ToLatexExpression(0))
+                     .append('}')
+                     .append(indxes)
+                     .append(after_end_latex);
         }
 
-        // parse simple token
+        // parse complex token (token with indexes) and rest of expression
         if (right == null) {
-            return GetMyLatexWithIdxes();
+            return ToLatexComplexToken();
         } else {
-            return GetMyLatexWithIdxes().append(right.ToLatexInternal(0));
+            return ToLatexComplexToken().append(right.ToLatexExpression(0));
         }
     }
 
-    public StringBuilder GetMyLatexWithIdxes () {
+    public StringBuilder ToLatexComplexToken () {
         StringBuilder my_latex = new StringBuilder("");
         my_latex.append(text);
         if (r_up != null) {
-            my_latex.append("^{").append(r_up.ToLatexInternal(0)).append("}");
+            my_latex.append("^{").append(r_up.ToLatexExpression(0)).append("}");
         }
         if (r_down != null){
-            my_latex.append("_{").append(r_down.ToLatexInternal(0).append("}"));
+            my_latex.append("_{").append(r_down.ToLatexExpression(0).append("}"));
         }
         return my_latex;
     }

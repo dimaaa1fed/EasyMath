@@ -1,20 +1,17 @@
 package com.example.easymath;
 
-import android.widget.ArrayAdapter;
-
 import java.util.ArrayList;
 
 public class EasyExpression {
     public EasyExpression(){
-        entry_point = new EasyToken();
+        entry_point = new EasyToken(div_lines, true);
         entry_point.CreateBBoxSkeleton();
         entry_point.div_lines = div_lines;
     }
 
     public void Reset () {
         div_lines.clear();
-        entry_point = new EasyToken();
-        entry_point.div_lines = div_lines;
+        entry_point = new EasyToken(div_lines, true);
         entry_point.CreateBBoxSkeleton();
     }
 
@@ -42,7 +39,6 @@ public class EasyExpression {
 
     public void UpdateScale(double scale) {
         entry_point.scale = scale;
-        entry_point.div_lines.clear();
         entry_point.CreateBBoxSkeleton();
     }
 
