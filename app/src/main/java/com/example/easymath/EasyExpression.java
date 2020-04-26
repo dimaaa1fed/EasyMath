@@ -5,6 +5,7 @@ import java.util.ArrayList;
 public class EasyExpression {
     public EasyExpression(){
         entry_point = new EasyToken(div_lines, true);
+        entry_point.expression = this;
         entry_point.CreateBBoxSkeleton();
         entry_point.div_lines = div_lines;
     }
@@ -12,15 +13,8 @@ public class EasyExpression {
     public void Reset () {
         div_lines.clear();
         entry_point = new EasyToken(div_lines, true);
+        entry_point.expression = this;
         entry_point.CreateBBoxSkeleton();
-    }
-
-    public EasyToken GetEntryTokenByClick (double x, double y) {
-        return new EasyToken();
-    }
-
-    public EasyTraversal Iterator (EasyToken token) {
-        return new EasyTraversal(token);
     }
 
     public EasyTraversal Iterator () {

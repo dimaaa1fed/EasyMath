@@ -1,11 +1,15 @@
 package com.example.easymath;
 
+import android.widget.ArrayAdapter;
+
 import java.util.ArrayList;
 import java.util.Stack;
 import static java.lang.Math.abs;
 
 
 public class EasyToken {
+    public EasyExpression expression; // to reset, only root got it
+
     private final double scale_factor = 0.5;    // for u, d, ru, rd
     private final double dist_factor = 1 + 0.1; // for u, d, ru, rd
     private final double div_dist_factor = 1.2;
@@ -13,7 +17,7 @@ public class EasyToken {
     public double scale = 1;
 
     static public int group_global_id = 0;
-    public int token_group_id = -1;
+    public        int token_group_id = -1;
 
     // small size boxes for indexes
     public EasyToken up     = null;
@@ -77,6 +81,7 @@ public class EasyToken {
     }
 
     public void DeleteToken() {
+
         // delete full group
         if (token_group_id != -1) {
             EasyToken start = GetStartOfGroup();
@@ -94,7 +99,7 @@ public class EasyToken {
         // delete if one in numerator
         if (this.under_divline.size() > 0 &&
                 this.under_divline2.size() == this.under_divline.size()) {
-            if (this.text.equals("")) {
+            if (!this.text.equals("")) {
                 this.setText("");
             } else {
                 Remove(this, this);
@@ -114,6 +119,10 @@ public class EasyToken {
                 under_divline.remove(del);
             }
 
+            for (EasyToken ud : under_divline) {
+                ud.owner = right;
+            }
+
             this.right.under_divline.addAll(this.under_divline);
 
             Remove(this, this);
@@ -126,18 +135,47 @@ public class EasyToken {
             return;
         }
 
+        if (this.owner2 != null) {
+            this.owner.owner2 = this.owner2;
+            this.owner2.under_divline2.remove(this);
+            this.owner2.under_divline2.add(this.owner);
+            Remove(this, this);
+            return;
+        }
+
         Remove(this, this);
     }
 
     public void Remove (EasyToken from, EasyToken to)
     {
+        if (from.owner == null && to.right == null) {
+            from.expression.Reset();
+            return;
+        }
+
         if (from.owner != null) {
             from.owner.right = to.right;
         }
         if (to.right != null) {
+            if (from.owner == null) {
+                from.expression.entry_point = to.right;
+                to.right.expression = from.expression;
+                UpdateDivRefs(to.right);
+            }
             to.right.owner = from.owner;
         }
-        CreateBBoxSkeleton();
+        if (to.right != null) {
+            to.right.CreateBBoxSkeleton();
+        } else {
+            from.owner.CreateBBoxSkeleton();
+        }
+    }
+
+    public void UpdateDivRefs(EasyToken new_root) {
+        EasyTraversal it = new EasyTraversal(new_root);
+        while (it.HasNext()) {
+            it.Next().FillDivlineRef();
+        }
     }
 
     public EasyToken CreateTokenGroup(String name) {
@@ -904,7 +942,6 @@ public class EasyToken {
     private void FillDivlineRef()
     {
         div_lines = GetRoot().div_lines;
-        div_lines.clear(); //TODO: stay that here?
     }
 
     private EasyToken GetRoot () {
