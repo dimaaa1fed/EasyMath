@@ -18,7 +18,7 @@
 
 ### Ввод формулы пользователем
 #### Диаграмма состояний ввода формул пользователем
-![Test Image 2](readme_img/main_state.svg)
+![](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://github.com/dimaaa1fed/EasyMath/blob/master/main_state.puml)
 #### Добавление пустых токенов
 Пользователь делает свайп, который начинается в токене (прямоугольнике связаным с ним), и заканчивается снаружи токена. В зависимости от угла наклона свайпа, его длины, создаются различные пустые токены, связанные с данным.
 ![Test Image 2](readme_img/token_swipe.gif)
