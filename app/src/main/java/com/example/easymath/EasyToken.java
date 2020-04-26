@@ -4,31 +4,31 @@ import java.util.ArrayList;
 import java.util.Stack;
 import static java.lang.Math.abs;
 
+
 public class EasyToken {
-    final double scale_factor = 0.5;    // for u, d, ru, rd
-    final double dist_factor = 1 + 0.1; // for u, d, ru, rd
-    final double div_dist_factor = 1.2;
+    private final double scale_factor = 0.5;    // for u, d, ru, rd
+    private final double dist_factor = 1 + 0.1; // for u, d, ru, rd
+    private final double div_dist_factor = 1.2;
 
     public double scale = 1;
 
     static public int group_global_id = 0;
     public int token_group_id = -1;
 
-    // indexes, or signs
-    // small size boxes
-    public EasyToken up = null;
-    public EasyToken down = null;
-    public EasyToken r_up = null;
+    // small size boxes for indexes
+    public EasyToken up     = null;
+    public EasyToken down   = null;
+    public EasyToken r_up   = null;
     public EasyToken r_down = null;
 
     // same size as me
     public EasyToken right = null;
 
-    public ArrayList<EasyToken>under_divline = new ArrayList<>();
-    public ArrayList<EasyToken>under_divline2 = new ArrayList<>();  // end numerator has this ref (ref to end of denomerator)
+    public ArrayList<EasyToken>under_divline  = new ArrayList<>();
+    public ArrayList<EasyToken>under_divline2 = new ArrayList<>();  // end numerator has this ref (ref to end of denominator)
 
-    public EasyToken owner = null;  //null only if it is entry point
-    public EasyToken owner2 = null; // end denumerator has this ref (ref to end of numerator)
+    public EasyToken owner  = null;  // null only if it is entry point
+    public EasyToken owner2 = null;  // end denominator has this ref (ref to end of numerator)
 
     // bound_box in some coordinate system: render transform it
     public EasyTokenBox bbox;
@@ -36,7 +36,7 @@ public class EasyToken {
     private String text = "";
 
     public ArrayList<EasyTokenBox> div_lines; // refs to EasyExpression
-    public EasyTokenBox my_div_line; // start denumerator has it
+    public EasyTokenBox my_div_line;          // start denominator has it
 
     boolean is_single_translated = false;
 
@@ -85,7 +85,7 @@ public class EasyToken {
             return;
         }
 
-        // delete if one in denumerator
+        // delete if one in denominator
         if (WhoAmI(this) == EasyOwnerType.UNDER_DIVLINE && this.right == null) {
             this.setText("");
             return;
@@ -344,7 +344,7 @@ public class EasyToken {
             right.owner = this;
         }
 
-        // update end denumerator/numerator ref
+        // update end denominator/numerator ref
         if (owner2 != null) {
             owner2.under_divline2.set(0, right);
             right.owner2 = owner2;
@@ -513,32 +513,32 @@ public class EasyToken {
     {
         EasyToken start_numerator = this.owner;
         EasyToken end_numerator = start_numerator.GetEndOfNumerator(idx);
-        EasyToken start_denumerator = start_numerator.under_divline.get(idx);
-        EasyToken end_denumerator = start_denumerator.GetEndOfDenumerator();
+        EasyToken start_denominator = start_numerator.under_divline.get(idx);
+        EasyToken end_denominator = start_denominator.GetEndOfDenominator();
 
-        EasyToken rightest_in_numerator = GetRightestInNumerator(start_numerator, end_numerator, idx);
+        EasyToken rightest_in_numerator = GetRightestInNumirator(start_numerator, end_numerator, idx);
 
         double numerator_max_x = rightest_in_numerator.bbox.right_top.x;
         double numerator_min_x = start_numerator.bbox.left_bottom.x;
         double numerator_len = numerator_max_x - numerator_min_x;
 
-        double denumerator_max_x = end_denumerator.GetRightestSmall().bbox.right_top.x;
-        double denumerator_min_x = start_denumerator.bbox.left_bottom.x;
-        double denumerator_len = denumerator_max_x - denumerator_min_x;
+        double denominator_max_x = end_denominator.GetRightestSmall().bbox.right_top.x;
+        double denominator_min_x = start_denominator.bbox.left_bottom.x;
+        double denominator_len = denominator_max_x - denominator_min_x;
 
-        double line_len = Math.max(numerator_len, denumerator_len);
+        double line_len = Math.max(numerator_len, denominator_len);
 
         double yoffset = bbox.Height() * div_dist_factor;
 
-        // Translate non numerator rest to end of denumerator in the case, then denumerator is longer
+        // Translate non numerator rest to end of denominator in the case, then denominator is longer
         //TODO: Remove it then GetRightest used in CreateRightToken
         if (abs(line_len - numerator_len) > 0.001) {
             if (end_numerator.right != null) {
-                Translate(end_numerator.right, denumerator_len - numerator_len, 0, true);
+                Translate(end_numerator.right, denominator_len - numerator_len, 0, true);
             }
         }
 
-        // Numerator goes up to yoffset
+        // Numirator goes up to yoffset
         TranslateNumeratorRecursive(start_numerator, end_numerator, idx, 0, yoffset);
         // Translate single tokens (no under_divline) to yoffset / 2
         TranlateNearNonDivTokens(start_numerator, end_numerator, 0, yoffset / 2);
@@ -551,20 +551,20 @@ public class EasyToken {
             if (line_len != numerator_len) {
                 xoffset_n = (line_len - numerator_len) / 2;
                 //TODO: change, then height of de/numerator don't equals to start
-                Vec lb = new Vec(start_denumerator.bbox.left_bottom.x, GetUppest(start_denumerator).bbox.right_top.y);
-                Vec rt = new Vec(end_denumerator.GetRightestSmall().bbox.right_top.x, start_numerator.bbox.left_bottom.y);
+                Vec lb = new Vec(start_denominator.bbox.left_bottom.x, GetUppest(start_denominator).bbox.right_top.y);
+                Vec rt = new Vec(end_denominator.GetRightestSmall().bbox.right_top.x, start_numerator.bbox.left_bottom.y);
 
-                start_denumerator.my_div_line = new EasyTokenBox(lb, rt);
-                div_lines.add(start_denumerator.my_div_line);
+                start_denominator.my_div_line = new EasyTokenBox(lb, rt);
+                div_lines.add(start_denominator.my_div_line);
             } else {
-                xoffset_d = (line_len - denumerator_len) / 2;
+                xoffset_d = (line_len - denominator_len) / 2;
 
                 //TODO: change, then height of de/numerator don't equals to start
-                Vec lb = new Vec(start_numerator.bbox.left_bottom.x, GetUppest(start_denumerator).bbox.right_top.y);
+                Vec lb = new Vec(start_numerator.bbox.left_bottom.x, GetUppest(start_denominator).bbox.right_top.y);
                 Vec rt = new Vec(rightest_in_numerator.bbox.right_top.x, start_numerator.bbox.left_bottom.y);
 
-                start_denumerator.my_div_line = new EasyTokenBox(lb, rt);
-                div_lines.add(start_denumerator.my_div_line);
+                start_denominator.my_div_line = new EasyTokenBox(lb, rt);
+                div_lines.add(start_denominator.my_div_line);
             }
 
             if (xoffset_n != 0) {
@@ -572,7 +572,7 @@ public class EasyToken {
             }
 
             if (xoffset_d != 0) {
-                Translate(start_denumerator, xoffset_d, 0, false);
+                Translate(start_denominator, xoffset_d, 0, false);
             }
         }
     }
@@ -591,7 +591,7 @@ public class EasyToken {
             left.right = this;
         }
 
-        TranslateNumerator(start_numerator, end_numerator, idx, 0, yoffset);
+        TranslateNumirator(start_numerator, end_numerator, idx, 0, yoffset);
     }*/
 
     public void Translate(EasyToken root, double xoffset, double yoffset, boolean translate_lines) {
@@ -626,11 +626,11 @@ public class EasyToken {
     {
         TranslateNumerator(start_numerator, end_numerator, idx, xoffset, yoffset, false);
 
-        EasyToken den_end = end_numerator.GetEndOfDenumerator();
-                                                                // in this case it updates in translate numerator
+        EasyToken den_end = end_numerator.GetEndOfDenominator();
+        // in this case it updates in translate numerator
         if (den_end != null /*&& end_numerator.owner2 == null*/ && WhoAmI(start_numerator) != EasyOwnerType.UNDER_DIVLINE) {
             EasyToken n_end = den_end.owner2;
-            EasyToken n_start = den_end.GetStartOfNumerator();
+            EasyToken n_start = den_end.GetStartOfNumirator();
 
             // TODO: now []/([]/[])/([]/[]) bad render
             /*EasyToken flag, cur = n_start;
@@ -644,7 +644,7 @@ public class EasyToken {
 
             }*/
 
-            EasyToken den_start = den_end.GetStartOfDenumerator();
+            EasyToken den_start = den_end.GetStartOfdenominator();
             int new_idx = n_start.under_divline.indexOf(den_start);
             TranslateNumerator(n_start, n_end, new_idx, xoffset, yoffset, true);
         }
@@ -772,12 +772,12 @@ public class EasyToken {
         return EasyOwnerType.INVALID;
     }
 
-    public EasyToken GetRightestInNumerator (EasyToken start_numerator, EasyToken end_numerator, int idx) {
+    public EasyToken GetRightestInNumirator (EasyToken start_numerator, EasyToken end_numerator, int idx) {
         EasyToken t1 = start_numerator.owner;
         EasyToken t2 = end_numerator.right;
 
         //if (WhoAmI(start_numerator) == EasyOwnerType.RIGHT) {
-            start_numerator.owner = null;
+        start_numerator.owner = null;
         //}
         end_numerator.right = null;
 
@@ -835,7 +835,7 @@ public class EasyToken {
         return uppest;
     }
 
-/////////////////////////////////
+
     // TODO: up down???
     // Get token, that has got rightest bbox (recursion don't go to right firstly)
     public EasyToken GetRightestSmall () {
@@ -871,34 +871,34 @@ public class EasyToken {
         rightest = __GetRightestSmallInternal(token.right, rightest);
         return rightest;
     }
-/////////////////////////////////
 
-    // End denumerator has ref to end of numerator (owner2)
+
+    // End denominator has ref to end of numerator (owner2)
     public EasyToken GetEndOfNumerator(int idx) {
-        return under_divline.get(idx).GetEndOfDenumerator().owner2;
+        return under_divline.get(idx).GetEndOfDenominator().owner2;
     }
 
-    // End of denumerator has not null owner2 in row (start denumerator->right->right->...)
+    // End of denominator has not null owner2 in row (start denominator->right->right->...)
     // Other tokens in this row has null owner2
-    public EasyToken GetEndOfDenumerator() {
-        EasyToken end_denumerator = this;
+    public EasyToken GetEndOfDenominator() {
+        EasyToken end_denominator = this;
 
-        while (end_denumerator != null && end_denumerator.owner2 == null) {
-            end_denumerator = end_denumerator.right;
+        while (end_denominator != null && end_denominator.owner2 == null) {
+            end_denominator = end_denominator.right;
         }
-        return end_denumerator;
+        return end_denominator;
     }
 
-    public EasyToken GetStartOfDenumerator() {
-        EasyToken start_denumerator = this;
-        while (WhoAmI(start_denumerator) != EasyOwnerType.UNDER_DIVLINE) {
-            start_denumerator = start_denumerator.owner;
+    public EasyToken GetStartOfdenominator() {
+        EasyToken start_denominator = this;
+        while (WhoAmI(start_denominator) != EasyOwnerType.UNDER_DIVLINE) {
+            start_denominator = start_denominator.owner;
         }
-        return start_denumerator;
+        return start_denominator;
     }
 
-    public EasyToken GetStartOfNumerator() {
-        return GetStartOfDenumerator().owner;
+    public EasyToken GetStartOfNumirator() {
+        return GetStartOfdenominator().owner;
     }
 
     private void FillDivlineRef()
@@ -964,9 +964,9 @@ public class EasyToken {
             return div_latex;
         }
 
-         // parse token group
-         if (token_group_id != -1) {
-             if (right == null || right.token_group_id != token_group_id) {
+        // parse token group
+        if (token_group_id != -1) {
+            if (right == null || right.token_group_id != token_group_id) {
                 return new StringBuilder("");
             }
 
@@ -993,14 +993,14 @@ public class EasyToken {
                 after_end_latex = after_end.ToLatexExpression(0);     // parse rest part of expression
             }
 
-             StringBuilder indxes = end.ToLatexComplexToken();  // indexes after ')'
-             indxes.delete(0, 1);                               // remove duplicate ')'
+            StringBuilder indxes = end.ToLatexComplexToken();  // indexes after ')'
+            indxes.delete(0, 1);                               // remove duplicate ')'
 
-             return group_name
-                     .append(entry.ToLatexExpression(0))
-                     .append('}')
-                     .append(indxes)
-                     .append(after_end_latex);
+            return group_name
+                    .append(entry.ToLatexExpression(0))
+                    .append('}')
+                    .append(indxes)
+                    .append(after_end_latex);
         }
 
         // parse complex token (token with indexes) and rest of expression
